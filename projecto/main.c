@@ -3,18 +3,30 @@
 #include <string.h>
 #include "commandlinereader.h"
 
+#define VECTOR_SIZE 5
+#define ARG_LEN 100
+
 int main(int argc, char *argv[]){
 	
-	char input[101], command[101];
+	int i;
+	char input[ARG_LEN], command[ARG_LEN];
+	char **argVector;
 	
 	while(1){
-		fgets(input, 100, stdin);
+		fgets(input, ARG_LEN, stdin);
 		sscanf(input, "%s", command);
 		
-		if(strcmp(command, "exit") == 0){
+		if(strcmp(command, "pathname") == 0){
+			// enviar os comandos
+			argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
+			readLineArguments(argVector, VECTOR_SIZE);
+		}else if(strcmp(command, "exit") == 0){
+			free(argVector);
 			break;
+		}else{
+			printf("Command not found.\n");
 		}
 	}
 	
-	return EXIT_SUCCESS;
+	exit(EXIT_SUCCESS);
 }
