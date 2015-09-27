@@ -36,6 +36,7 @@ int readLineArguments(char **argVector, int vectorSize)
   if (argVector == NULL || vectorSize == 0)
     return 0;
 
+  // o programa fica preso aqui a espera do input do teclado
   if (getline(&str, &size, stdin) < 0) {
     printf("!!\n");
     return -1;
