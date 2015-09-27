@@ -12,12 +12,12 @@
 int main(int argc, char *argv[]){
 	
 	char **argVector;
+	int i, *childrenPID, children = 0;
 	
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
+	childrenPID = (int *) malloc(0); // para depois fazer realloc
 	
 	while(1){
-		/*fgets(input, ARG_LEN, stdin);
-		sscanf(input, "%s", command);*/
 		readLineArguments(argVector, VECTOR_SIZE);
 		
 		if(strcmp(argVector[0], "exit") == 0){
@@ -27,34 +27,44 @@ int main(int argc, char *argv[]){
 			// um comando para ser procurado na directoria de trabalho
 			// e executado
 			
-			int status, pid = fork();
+			int pid = fork();
 			
 			if(pid != 0){
 				// pai
 				if(pid < 0){
 					// erro ao criar o processo filho
-					//write(stdout, "Error creating process\n", 23);
 					perror("Error forking process\n");
 				}
-				wait(&status);
-				
-				// neste exercicio o pai nao monitoriza os filhos durante
-				// a execucao, apenas quando termina
+				// neste exercicio o pai nao monitoriza os filhos
+				childrenPID = (int *) realloc(childrenPID, (children + 1) * sizeof(int));
+				childrenPID[children] = pid;
+				children++;
 			}else{
 				// filho
 				// substitui a imagem do executavel actual
 				// pelo especificado no comando
 				if(execv(argVector[0], argVector)){
 					perror("Error in execv\n");
+					exit(EXIT_FAILURE);
 				}
 			}
 			// espirito santo? novo banco?
 		}
 	}
-	
-	
-	
+	// quando sai, verifica se todos os filhos que criou ja terminaram
+	// e espera pelos que ainda estao a correr
+	printf("Waiting for child processes to finish...\n");
+	int status;
+	for(i = 0; i < children; i++){
+		printf("\t%d processes remaining\n", children - i);
+		//waitpid(childrenPID[i], &status, 1);
+		wait(&status);
+		printf("Process %d terminated with status %d\n", childrenPID[i], status);
+	}
+	printf("All child processes finished\n");
 	free(argVector);
+	
+	printf("par-shell terminated\n");
 	
 	exit(EXIT_SUCCESS);
 }
