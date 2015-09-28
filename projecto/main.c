@@ -7,33 +7,33 @@
 #include "commandlinereader.h"
 
 #define VECTOR_SIZE 6
-#define ARG_LEN 100
+#define ARG_LEN 256
 
 int main(int argc, char *argv[]){
-	
+	char *erro_perror = "Error in execv";
 	char **argVector;
 	int i, *childrenPID, children = 0;
-	
+
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
 	childrenPID = (int *) malloc(0); // para depois fazer realloc
-	
+
 	while(1){
 		readLineArguments(argVector, VECTOR_SIZE);
-		
+
 		if(strcmp(argVector[0], "exit") == 0){
 			break;
 		}else{
 			// qualquer comando que nao seja "exit" e considerado como
 			// um comando para ser procurado na directoria de trabalho
 			// e executado
-			
+
 			int pid = fork();
-			
+
 			if(pid != 0){
 				// pai
 				if(pid < 0){
 					// erro ao criar o processo filho
-					perror("Error forking process\n");
+					perror("Error forking process");
 				}
 				// neste exercicio o pai nao monitoriza os filhos
 				childrenPID = (int *) realloc(childrenPID, (children + 1) * sizeof(int));
@@ -43,8 +43,9 @@ int main(int argc, char *argv[]){
 				// filho
 				// substitui a imagem do executavel actual
 				// pelo especificado no comando
-				if(execv(argVector[0], argVector)){
-					perror("Error in execv\n");
+				if(execvp(argVector[0], argVector)){
+					fprintf(stderr, "%s\n", "o comando especificado nao existe");
+					//perror(erro_perror);
 					exit(EXIT_FAILURE);
 				}
 			}
@@ -63,8 +64,8 @@ int main(int argc, char *argv[]){
 	}
 	printf("All child processes finished\n");
 	free(argVector);
-	
+
 	printf("par-shell terminated\n");
-	
+
 	exit(EXIT_SUCCESS);
 }
