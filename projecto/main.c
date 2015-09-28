@@ -12,10 +12,9 @@
 int main(int argc, char *argv[]){
 
 	char **argVector;
-	int i, *childrenPID, children = 0;
+	int i, children = 0;
 
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
-	childrenPID = (int *) malloc(0); // para depois fazer realloc
 
 	while(1){
 		readLineArguments(argVector, VECTOR_SIZE);
@@ -27,8 +26,7 @@ int main(int argc, char *argv[]){
 			break;
 		}else{
 			// qualquer comando que nao seja "exit" e considerado como
-			// um comando para ser procurado na directoria de trabalho
-			// e executado
+			// um comando para ser procurado
 
 			int pid = fork();
 
@@ -38,9 +36,8 @@ int main(int argc, char *argv[]){
 					// erro ao criar o processo filho
 					perror("Error forking process\n");
 				}
-				// neste exercicio o pai nao monitoriza os filhos
-				childrenPID = (int *) realloc(childrenPID, (children + 1) * sizeof(int));
-				childrenPID[children] = pid;
+				// neste exercicio o pai nao monitoriza os filhos durante a execucao
+				// apenas quando termina
 				children++;
 			}else{
 				// filho
@@ -60,13 +57,11 @@ int main(int argc, char *argv[]){
 	int status;
 	for(i = 0; i < children; i++){
 		printf("\t%d processes remaining\n", children - i);
-		//waitpid(childrenPID[i], &status, 1);
-		wait(&status);
-		printf("Process %d terminated with status %d\n", childrenPID[i], status);
+		pid_t ret = wait(&status);
+		printf("Process %d terminated with status %d\n", ret, status);
 	}
 	printf("All child processes finished\n");
 	free(argVector);
-	free(childrenPID);
 
 	printf("par-shell terminated\n");
 
