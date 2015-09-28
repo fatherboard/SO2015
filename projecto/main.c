@@ -8,9 +8,9 @@
 
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
+#define __DEBUG__ 0
 
 int main(int argc, char *argv[]){
-	char *erro_perror = "Error in execv";
 	char **argVector;
 	int i, *childrenPID, children = 0;
 
@@ -43,11 +43,20 @@ int main(int argc, char *argv[]){
 				// filho
 				// substitui a imagem do executavel actual
 				// pelo especificado no comando
+				if(execv(argVector[0], argVector)){
+					if(__DEBUG__){
+						printf("o comando nao existe na directoria actual\n");
+					}
+				}
 				if(execvp(argVector[0], argVector)){
-					fprintf(stderr, "%s\n", "o comando especificado nao existe");
+					if(__DEBUG__){
+						printf("o comando nao existe em lado nenhum..\n");
+					}
+					fprintf(stderr, "o comando %s nao existe\n",argVector[0]);
 					//perror(erro_perror);
 					exit(EXIT_FAILURE);
 				}
+				printf("Isto nao e suposto ser escrito\n");
 			}
 			// espirito santo? novo banco?
 		}
