@@ -10,25 +10,28 @@
 #define ARG_LEN 100
 
 int main(int argc, char *argv[]){
-	
+
 	char **argVector;
 	int i, *childrenPID, children = 0;
-	
+
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
 	childrenPID = (int *) malloc(0); // para depois fazer realloc
-	
+
 	while(1){
 		readLineArguments(argVector, VECTOR_SIZE);
-		
+
+		if(argVector[0] == NULL)
+			continue;
+
 		if(strcmp(argVector[0], "exit") == 0){
 			break;
 		}else{
 			// qualquer comando que nao seja "exit" e considerado como
 			// um comando para ser procurado na directoria de trabalho
 			// e executado
-			
+
 			int pid = fork();
-			
+
 			if(pid != 0){
 				// pai
 				if(pid < 0){
@@ -63,8 +66,9 @@ int main(int argc, char *argv[]){
 	}
 	printf("All child processes finished\n");
 	free(argVector);
-	
+	free(childrenPID);
+
 	printf("par-shell terminated\n");
-	
+
 	exit(EXIT_SUCCESS);
 }
