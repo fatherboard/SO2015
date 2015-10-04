@@ -64,13 +64,23 @@ int main(int argc, char *argv[]){
 	// quando sai, verifica se todos os filhos que criou ja terminaram
 	// e espera pelos que ainda estao a correr
 	printf("Waiting for child processes to finish...\n");
+	int *outpid = malloc(sizeof(int)*children);
+	int *outstatus = malloc(sizeof(int)*children);
 	int status;
 	for(i = 0; i < children; i++){
+		/**
 		printf("\t%d processes remaining\n", children - i);
+		*/
 		pid_t ret = wait(&status);
-		printf("Process %d terminated with status %d\n", ret, status);
+		outpid[i] = ret;
+		outstatus[i] = status;
+	}
+	for(i = 0; i < children; i++){
+		printf("Process %d terminated with status %d\n", outpid[i], outstatus[i]);
 	}
 	printf("All child processes finished\n");
+	free(outpid);
+	free(outstatus);
 	free(argVector);
 
 	printf("par-shell terminated\n");
