@@ -15,27 +15,28 @@ int main(int argc, char *argv[]){
 	int i, children = 0;
 
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
-
-	while(1){
+	_exit = 0;
+	while(!_exit){
 		readLineArguments(argVector, VECTOR_SIZE);
 
 		if(argVector[0] == NULL)
 			continue;
 
 		if(strcmp(argVector[0], "exit") == 0){
-			break;
+			_exit = 1;
 		}else{
 			// qualquer comando que nao seja "exit" e considerado como
 			// um comando para ser procurado
 
 			int pid = fork();
 
-			if(pid != 0){
+			if(pid < 0){
+
+				// erro ao criar o processo filho
+				perror("Error forking process");
+
+			}else if(pid > 0) {
 				// pai
-				if(pid < 0){
-					// erro ao criar o processo filho
-					perror("Error forking process");
-				}
 				// neste exercicio o pai nao monitoriza os filhos durante a execucao
 				// apenas quando termina
 				children++;
