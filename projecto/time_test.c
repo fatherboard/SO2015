@@ -14,9 +14,10 @@ int main(int argc, char *argv[]){
 		}
 		printf("Will sleep %d seconds\n",time);
 		sleep(time);
-		printf("Sleepeed %d seconds\n",time);
+		printf("Sleept %d seconds\n",time);
 	}
 	else
 		printf("No time given: <sem args>\n");
-	exit(EXIT_SUCCESS);	
+  printf("Process %d finished sleeping.\n", (int) getpid());
+  exit(EXIT_SUCCESS);
 }

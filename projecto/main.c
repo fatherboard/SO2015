@@ -13,9 +13,8 @@
 int main(int argc, char *argv[]){
 	char **argVector;
 	int i, children = 0;
-
+	int _exit = 0;
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
-	_exit = 0;
 	while(!_exit){
 		readLineArguments(argVector, VECTOR_SIZE);
 
@@ -31,7 +30,6 @@ int main(int argc, char *argv[]){
 			int pid = fork();
 
 			if(pid < 0){
-
 				// erro ao criar o processo filho
 				perror("Error forking process");
 
@@ -40,24 +38,22 @@ int main(int argc, char *argv[]){
 				// neste exercicio o pai nao monitoriza os filhos durante a execucao
 				// apenas quando termina
 				children++;
+
 			}else{
 				// filho
 				// substitui a imagem do executavel actual
 				// pelo especificado no comando
 				if(execv(argVector[0], argVector)){
-					if(__DEBUG__){
+					if(__DEBUG__)
 						printf("o comando nao existe na directoria actual\n");
-					}
 				}
 				if(execvp(argVector[0], argVector)){
-					if(__DEBUG__){
+					if(__DEBUG__)
 						printf("o comando nao existe em lado nenhum..\n");
-					}
+
 					fprintf(stderr, "o comando %s nao existe\n",argVector[0]);
-					//perror(erro_perror);
 					exit(EXIT_FAILURE);
 				}
-				printf("Isto nao e suposto ser escrito\n");
 			}
 			// espirito santo? novo banco?
 		}
@@ -69,15 +65,17 @@ int main(int argc, char *argv[]){
 	int *outstatus = malloc(sizeof(int)*children);
 	int status;
 	for(i = 0; i < children; i++){
-		/**
-		printf("\t%d processes remaining\n", children - i);
-		*/
+		if(__DEBUG__)
+			printf("\t%d processes remaining\n", children - i);
 		pid_t ret = wait(&status);
 		outpid[i] = ret;
 		outstatus[i] = status;
 	}
+	int currentStatus;
 	for(i = 0; i < children; i++){
-		printf("Process %d terminated with status %d\n", outpid[i], outstatus[i]);
+		currentStatus = outstatus[i];
+		if(WIFEXITED(currentStatus))
+			printf("Process %d terminated with status %d\n", outpid[i],WEXITSTATUS(currentStatus));
 	}
 	printf("All child processes finished\n");
 	free(outpid);
