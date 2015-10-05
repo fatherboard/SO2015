@@ -1,4 +1,4 @@
-par-shell: time_test fib teste main.c commandlinereader.c 
+par-shell: seg_fault time_test fib teste main.c commandlinereader.c 
 	gcc main.c commandlinereader.c -g -Wall -o par-shell
 
 fib: fibonacci.c commandlinereader.c
@@ -6,8 +6,13 @@ fib: fibonacci.c commandlinereader.c
 
 teste: teste.c 
 	gcc teste.c -g -Wall -o teste
+
 time_test: time_test.c
 	gcc time_test.c -g -Wall -o time_teste
+
+seg_fault: seg_fault.c
+	gcc seg_fault.c -w -g -Wall -o seg_fault
+	
 valgrind: par-shell
 	valgrind --leak-check=full ./par-shell
 	
