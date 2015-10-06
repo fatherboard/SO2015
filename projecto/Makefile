@@ -1,4 +1,4 @@
-par-shell: seg_fault time_test fib teste main.c commandlinereader.c 
+par-shell: main.c commandlinereader.c 
 	gcc main.c commandlinereader.c -g -Wall -o par-shell
 
 fib: fibonacci.c commandlinereader.c
@@ -6,6 +6,9 @@ fib: fibonacci.c commandlinereader.c
 
 teste: teste.c 
 	gcc teste.c -g -Wall -o teste
+
+fail: teste_failure.c
+	gcc teste_failure.c -g -Wall -o fail
 
 time_test: time_test.c
 	gcc time_test.c -g -Wall -o time_teste
@@ -20,4 +23,4 @@ gdb: par-shell
 	gdb par-shell
 
 clean:
-	rm -f *.o *.c~ *.h~ Makefile~ par-shell fib teste
+	rm -f *.o *.c~ *.h~ Makefile~ par-shell fib teste seg_fault fail

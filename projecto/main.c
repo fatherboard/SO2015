@@ -22,7 +22,6 @@ int main(int argc, char *argv[]){
 	
 	// loop infinito de execucao da par-shell
 	while(!_exit){
-		printf("> ");
 		// le os argumentos atraves da funcao fornecida
 		readLineArguments(argVector, VECTOR_SIZE);
 
