@@ -15,13 +15,14 @@ int main(int argc, char *argv[]){
 	char **argVector;
 	int i, children = 0;
 	int _exit = 0;
+	int maxChildren = atoi(argv[1]);
 	// o argVector ira guardar o input do utilizador na par-shell. O seu tamanho coincide
 	// com o numero maximo de argumentos permitidos mais um, que corresponde ao nome do
 	// proprio comando
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
 	
 	// loop infinito de execucao da par-shell
-	while(!_exit){
+	while(!_exit && children < maxChildren){
 		// le os argumentos atraves da funcao fornecida
 		readLineArguments(argVector, VECTOR_SIZE);
 
