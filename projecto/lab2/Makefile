@@ -1,5 +1,5 @@
 par-shell: main.c commandlinereader.c 
-	gcc main.c commandlinereader.c -g -Wall -o par-shell
+	gcc main.c commandlinereader.c -g -lpthread -Wall -o par-shell
 
 fib: fibonacci.c commandlinereader.c
 	gcc fibonacci.c commandlinereader.c -g -Wall -o fib

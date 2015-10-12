@@ -4,11 +4,18 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <pthread.h>
 #include "commandlinereader.h"
+
 
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define __DEBUG__ 0
+
+void *tarefa_monitora(){
+	printf("Estamos na tarefa_monitora %d\n", (int) pthread_self() );
+	return 0;
+}
 
 int main(int argc, char *argv[]){
 
@@ -19,6 +26,17 @@ int main(int argc, char *argv[]){
 	// com o numero maximo de argumentos permitidos mais um, que corresponde ao nome do
 	// proprio comando
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
+	/*Aula teorica */
+	pthread_t tid;
+	if(pthread_create (&tid, 0,tarefa_monitora, NULL) == 0)	{
+		if(__DEBUG__){
+			printf ("Criada a tarefa %d\n",(int) tid);
+		}
+	}
+	else {
+		printf("\e[31mErro \e[0m na criação da tarefa\n");
+		exit(1);
+	}
 
 	// loop infinito de execucao da par-shell
 	while(!_exit){
@@ -112,7 +130,7 @@ int main(int argc, char *argv[]){
 
 	// da a mensagem de fim do programa
 	printf("par-shell terminated\n");
-
+	pthread_join (tid, NULL);
 	// termina com o estado de execucao bem sucedida
 	exit(EXIT_SUCCESS);
 }
