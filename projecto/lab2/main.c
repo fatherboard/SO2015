@@ -14,10 +14,10 @@
 #define __DEBUG__ 0
 /*
 	list_t* lst_new()
-	void lst_destroy(list_t *list)
 	void insert_new_process(list_t *list, int pid, time_t starttime)
 	void update_terminated_process(list_t *list, int pid, time_t endtime)
 	void lst_print(list_t *list)
+	void lst_destroy(list_t *list)
 */
 /**/
 list_t* lista_processos;
@@ -25,9 +25,9 @@ int children = 0;
 
 
 void *tarefa_monitora(){
-	if(__DEBUG__)
+	//if(__DEBUG__)
 		printf("Estamos na tarefa_monitora %d\n", (int) pthread_self() );
-
+		/*
 	int status;
 	time_t * endtime;
 	while(1){
@@ -35,19 +35,19 @@ void *tarefa_monitora(){
 			pid_t ret = wait(&status);
 
 			/*lista_mutex.lock()*/
-			time( endtime );
-			update_terminated_process(lista_processos, ret, *endtime);
+			//			time( endtime );
+			//			update_terminated_process(lista_processos, ret, *endtime);
 
 			/*lista_mutex.unlock()*/
 			/* children_mutex.lock() FIXME*/
-			children--;
+			//			children--;
 			/* children_mutex.unlock() FIXME*/
-		}
+			/*		}
 		else{
 			sleep(1);
 		}
-
 	}
+	*/
 	return 0;
 }
 
@@ -135,16 +135,20 @@ int main(int argc, char *argv[]){
 	// aloca memoria necessaria para a monitorizacao da terminacao dos processos filho
 	int *outpid = (int *) malloc(sizeof(int) * children);
 	int *outstatus = (int *) malloc(sizeof(int) * children);
+	int status;
+	time_t * endtime;
 
 	for(i = 0; i < children; i++){
 		if(__DEBUG__){
 			printf("\t%d processes remaining\n", children - i);
 		}
 		// aguarda pela terminacao dos processos filhos
-		//pid_t ret = wait(&status);
+		pid_t ret = wait(&status);
 		// regista o pid do processo acabado de terminar e o respectivo return status
-		//outpid[i] = ret;
-		//outstatus[i] = status;
+		outpid[i] = ret;
+		outstatus[i] = status;
+		time( endtime );
+		update_terminated_process(lista_processos, ret, *endtime);
 	}
 	pthread_join (tid, NULL);
 
@@ -156,6 +160,8 @@ int main(int argc, char *argv[]){
 			printf("Process %d terminated with status %d\n", outpid[i], WEXITSTATUS(currentStatus));
 		}
 	}
+  lst_print(lista_processos);
+	lst_destroy(lista_processos):
 
 	printf("All child processes finished\n");
 

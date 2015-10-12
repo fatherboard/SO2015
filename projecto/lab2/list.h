@@ -1,5 +1,5 @@
 /*
- * list.h - definitions and declarations of the integer list 
+ * list.h - definitions and declarations of the integer list
  */
 
 
@@ -12,6 +12,8 @@
 /* lst_iitem - each element of the list points to the next element */
 typedef struct lst_iitem {
    int pid;
+   int status;
+   bool valid_status = 0;
    time_t starttime;
    time_t endtime;
    struct lst_iitem *next;

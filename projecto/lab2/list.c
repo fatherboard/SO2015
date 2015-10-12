@@ -1,5 +1,5 @@
 /*
- * list.c - implementation of the integer list functions 
+ * list.c - implementation of the integer list functions
  */
 
 
@@ -52,6 +52,7 @@ void update_terminated_process(list_t *list, int pid, time_t endtime)
    lst_iitem_t *aux = list->first;
    while(aux != NULL){
      if(aux->pid == pid){
+
        aux->endtime = endtime;
        printf("derp\n");
        break;
