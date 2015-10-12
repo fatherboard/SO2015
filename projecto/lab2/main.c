@@ -11,9 +11,27 @@
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define __DEBUG__ 0
-
+/*
+	list_t* lst_new()
+	void lst_destroy(list_t *list)
+	void insert_new_process(list_t *list, int pid, time_t starttime)
+	void update_terminated_process(list_t *list, int pid, time_t endtime)
+	void lst_print(list_t *list)
+*/
 void *tarefa_monitora(){
-	printf("Estamos na tarefa_monitora %d\n", (int) pthread_self() );
+	if(__DEBUG__)
+		printf("Estamos na tarefa_monitora %d\n", (int) pthread_self() );
+	int status;
+
+	while(true){
+		if(children > 0) {
+			pid_t ret = wait(&status);
+		}
+		else{
+			sleep(1)
+		}
+
+	}
 	return 0;
 }
 
@@ -66,7 +84,11 @@ int main(int argc, char *argv[]){
 				// PROCESSO PAI
 				// neste exercicio o pai nao monitoriza os filhos durante a execucao
 				// apenas quando termina
+
+				/* mutex.lock() FIXME*/
 				children++;
+				/* mutex.unlock() FIXME*/
+
 
 			}else{
 				// PROCESSO FILHO
@@ -99,7 +121,6 @@ int main(int argc, char *argv[]){
 	// aloca memoria necessaria para a monitorizacao da terminacao dos processos filho
 	int *outpid = (int *) malloc(sizeof(int) * children);
 	int *outstatus = (int *) malloc(sizeof(int) * children);
-	int status;
 
 	for(i = 0; i < children; i++){
 		if(__DEBUG__){
@@ -111,6 +132,7 @@ int main(int argc, char *argv[]){
 		outpid[i] = ret;
 		outstatus[i] = status;
 	}
+	pthread_join (tid, NULL);
 
 	int currentStatus;
 	for(i = 0; i < children; i++){
@@ -130,7 +152,6 @@ int main(int argc, char *argv[]){
 
 	// da a mensagem de fim do programa
 	printf("par-shell terminated\n");
-	pthread_join (tid, NULL);
 	// termina com o estado de execucao bem sucedida
 	exit(EXIT_SUCCESS);
 }
