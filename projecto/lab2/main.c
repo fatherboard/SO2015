@@ -96,7 +96,7 @@ int main(int argc, char *argv[]){
 
 			}else if(pid > 0) {
 				// PROCESSO PAI
-
+				
 				/* children_mutex.lock() FIXME*/
 				children++;
 				/* children_mutex.unlock() FIXME*/
@@ -161,7 +161,7 @@ int main(int argc, char *argv[]){
 		}
 	}
   lst_print(lista_processos);
-	lst_destroy(lista_processos):
+	lst_destroy(lista_processos);
 
 	printf("All child processes finished\n");
 

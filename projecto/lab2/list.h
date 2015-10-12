@@ -13,7 +13,7 @@
 typedef struct lst_iitem {
    int pid;
    int status;
-   bool valid_status = 0;
+   int valid_status;
    time_t starttime;
    time_t endtime;
    struct lst_iitem *next;

@@ -41,6 +41,7 @@ void insert_new_process(list_t *list, int pid, time_t starttime)
 	item->pid = pid;
 	item->starttime = starttime;
 	item->endtime = 0;
+  item->valid_status = 0;
 	item->next = list->first;
 	list->first = item;
 }

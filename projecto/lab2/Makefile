@@ -1,10 +1,10 @@
-par-shell: main.c commandlinereader.c 
-	gcc main.c commandlinereader.c -g -lpthread -Wall -o par-shell
+par-shell: main.c commandlinereader.c
+	gcc main.c list.c commandlinereader.c -g -lpthread -Wall -o par-shell
 
 fib: fibonacci.c commandlinereader.c
 	gcc fibonacci.c commandlinereader.c -g -Wall -o fib
 
-teste: teste.c 
+teste: teste.c
 	gcc teste.c -g -Wall -o teste
 
 fail: teste_failure.c
@@ -15,10 +15,10 @@ time_test: time_test.c
 
 seg_fault: seg_fault.c
 	gcc seg_fault.c -w -g -Wall -o seg_fault
-	
+
 valgrind: par-shell
 	valgrind --leak-check=full ./par-shell
-	
+
 gdb: par-shell
 	gdb par-shell
 
