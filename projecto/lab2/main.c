@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <pthread.h>
 #include "commandlinereader.h"
+#include "list.h"
 
 
 #define VECTOR_SIZE 6
@@ -18,17 +19,32 @@
 	void update_terminated_process(list_t *list, int pid, time_t endtime)
 	void lst_print(list_t *list)
 */
+/**/
+list_t* lista_processos;
+int children = 0;
+
+
 void *tarefa_monitora(){
 	if(__DEBUG__)
 		printf("Estamos na tarefa_monitora %d\n", (int) pthread_self() );
-	int status;
 
-	while(true){
+	int status;
+	time_t * endtime;
+	while(1){
 		if(children > 0) {
 			pid_t ret = wait(&status);
+
+			/*lista_mutex.lock()*/
+			time( endtime );
+			update_terminated_process(lista_processos, ret, *endtime);
+
+			/*lista_mutex.unlock()*/
+			/* children_mutex.lock() FIXME*/
+			children--;
+			/* children_mutex.unlock() FIXME*/
 		}
 		else{
-			sleep(1)
+			sleep(1);
 		}
 
 	}
@@ -36,14 +52,15 @@ void *tarefa_monitora(){
 }
 
 int main(int argc, char *argv[]){
-
+	lista_processos= lst_new();
 	char **argVector;
-	int i, children = 0;
+	int i;
 	int _exit = 0;
 	// o argVector ira guardar o input do utilizador na par-shell. O seu tamanho coincide
 	// com o numero maximo de argumentos permitidos mais um, que corresponde ao nome do
 	// proprio comando
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
+
 	/*Aula teorica */
 	pthread_t tid;
 	if(pthread_create (&tid, 0,tarefa_monitora, NULL) == 0)	{
@@ -55,6 +72,7 @@ int main(int argc, char *argv[]){
 		printf("\e[31mErro \e[0m na criação da tarefa\n");
 		exit(1);
 	}
+  /**/
 
 	// loop infinito de execucao da par-shell
 	while(!_exit){
@@ -67,13 +85,9 @@ int main(int argc, char *argv[]){
 		}
 
 		if(strcmp(argVector[0], "exit") == 0){
-			// caso tenha sido introduzido o comando "exit", a par-shell prepara-se para terminar
 			_exit = 1;
 		}else{
-			// caso tenha sido introduzido um comando que nao seja "exit", a par-shell prepara-se
-			// para executar o binario indicado
-
-			// faz fork para criar o processo filho
+			// Criacao do processo filho
 			int pid = fork();
 
 			if(pid < 0){
@@ -82,26 +96,26 @@ int main(int argc, char *argv[]){
 
 			}else if(pid > 0) {
 				// PROCESSO PAI
-				// neste exercicio o pai nao monitoriza os filhos durante a execucao
-				// apenas quando termina
 
-				/* mutex.lock() FIXME*/
+				/* children_mutex.lock() FIXME*/
 				children++;
-				/* mutex.unlock() FIXME*/
-
+				/* children_mutex.unlock() FIXME*/
+				time_t * starttime;
+				/*lista_mutex.lock()*/
+				time(starttime);
+				insert_new_process(lista_processos, pid, *starttime);
+				/*lista_mutex.unlock()*/
 
 			}else{
 				// PROCESSO FILHO
 				// substitui a imagem do executavel actual pelo especificado no comando introduzido
 
-				// comeca por procurar o executavel na directoria de trabalho actual
 				if(execv(argVector[0], argVector)){
 					if(__DEBUG__){
 						printf("o comando nao existe na directoria actual.\n");
 					}
 				}
-				// o processo continua se nao tiver sido possivel fazer a substituicao do executavel
-				// verifica se a imagem se encontra numa directoria indicada pela PATH
+				// o processo continua se nao tiver sido possivel fazer a substituicao do executavel na directoria actual
 				if(execvp(argVector[0], argVector)){
 					if(__DEBUG__){
 						printf("o comando nao existe em lado nenhum.\n");
@@ -127,10 +141,10 @@ int main(int argc, char *argv[]){
 			printf("\t%d processes remaining\n", children - i);
 		}
 		// aguarda pela terminacao dos processos filhos
-		pid_t ret = wait(&status);
+		//pid_t ret = wait(&status);
 		// regista o pid do processo acabado de terminar e o respectivo return status
-		outpid[i] = ret;
-		outstatus[i] = status;
+		//outpid[i] = ret;
+		//outstatus[i] = status;
 	}
 	pthread_join (tid, NULL);
 
