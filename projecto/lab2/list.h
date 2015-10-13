@@ -36,7 +36,7 @@ void lst_destroy(list_t *);
 void insert_new_process(list_t *list, int pid, time_t starttime);
 
 /* lst_remove -  changes endtime of item  of first item of pid 'pid' from list 'list' */
-void update_terminated_process(list_t *list, int pid, time_t endtime);
+void update_terminated_process(list_t *list, int pid, time_t endtime, int status);
 
 /* delete_process - delete from the list  first proccess pid */
 void delete_process(list_t *list, int pid);

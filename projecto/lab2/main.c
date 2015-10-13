@@ -24,7 +24,7 @@
 
 void *tarefa_monitora(){
 	//if(__DEBUG__)
-		printf("\e[36mEstamos na tarefa_monitora %d\e[0m\n", (int) pthread_self() );
+		printf("\e[36m[ DEBUG ]\e[0m Estamos na tarefa_monitora %d\n", (int) pthread_self() );
 		/*
 	int status;
 	time_t * endtime;
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]){
 	pthread_t tid;
 	if(pthread_create (&tid, 0,tarefa_monitora, NULL) == 0)	{
 		//if(__DEBUG__){
-			printf ("\e[36mCriada a tarefa %d\e[0m\n",(int) tid);
+			printf ("\e[36m[ DEBUG ]\e[0m Criada a tarefa %d\e[0m\n",(int) tid);
 		//}
 	}
 	else {
@@ -111,13 +111,13 @@ int main(int argc, char *argv[]){
 
 				if(execv(argVector[0], argVector)){
 					if(__DEBUG__){
-						printf("\e[36mo comando nao existe na directoria actual.\e[0m\n");
+						printf("\e[36m[ DEBUG ]\e[0m O comando nao existe na directoria actual.\e[0m\n");
 					}
 				}
 				// o processo continua se nao tiver sido possivel fazer a substituicao do executavel na directoria actual
 				if(execvp(argVector[0], argVector)){
 					if(__DEBUG__){
-						printf("\e[36mo comando nao existe em lado nenhum.\e[0m\n");
+						printf("\e[36m[ DEBUG ]\e[0m O comando nao existe em lado nenhum.\e[0m\n");
 					}
 
 					// caso nao tenha sido possivel fazer a substituicao do executavel do processo,
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]){
 
 	for(i = 0; i < children; i++){
 		if(__DEBUG__){
-			printf("\e[36m\t%d processes remaining\n\e[0m", children - i);
+			printf("\e[36m[ DEBUG ]\e[0m\t%d processes remaining\n", children - i);
 		}
 		// aguarda pela terminacao dos processos filhos
 		pid_t ret = wait(&status);
@@ -147,7 +147,7 @@ int main(int argc, char *argv[]){
 		outpid[i] = ret;
 		outstatus[i] = status;
 		if(WIFEXITED(status)){
-			update_terminated_process(lista_processos, ret, time(NULL));
+			update_terminated_process(lista_processos, ret, time(NULL), WEXITSTATUS(currentStatus));
 		}
 		else{
 			printf("\e[31mProcess %d terminated Abruptly\e[0m\n", ret );
@@ -156,6 +156,7 @@ int main(int argc, char *argv[]){
 	}
 	//pthread_join (tid, NULL);
 
+	/*TODO probably garbage*/
 	int currentStatus;
 	for(i = 0; i < children; i++){
 		// apresenta no ecra o exit status reportado por cada processo filho e o respectivo pid
@@ -164,6 +165,7 @@ int main(int argc, char *argv[]){
 			printf("Process %d terminated with status %d\n", outpid[i], WEXITSTATUS(currentStatus));
 		}
 	}
+	/*TODO end ^ */
 
   lst_print(lista_processos);
 	lst_destroy(lista_processos);
