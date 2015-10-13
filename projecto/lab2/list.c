@@ -41,7 +41,6 @@ void insert_new_process(list_t *list, int pid, time_t starttime)
 	item->pid = pid;
 	item->starttime = starttime;
 	item->endtime = 0;
-  item->valid_status = 0;
 	item->next = list->first;
 	list->first = item;
 }
@@ -53,24 +52,42 @@ void update_terminated_process(list_t *list, int pid, time_t endtime)
    lst_iitem_t *aux = list->first;
    while(aux != NULL){
      if(aux->pid == pid){
-
        aux->endtime = endtime;
-       printf("derp\n");
        break;
      }
      aux = aux->next;
    }
-   printf("teminated process with pid: %d\n", pid);
+   if( aux == NULL)
+    printf("[\e[31mERROR\e[0m : update_terminated_process] There is no process on the list with the pid: %d\n", pid );
+//   printf("teminated process with pid: %d\n", pid);
+}
+
+void delete_process(list_t *list, int pid){
+  lst_iitem_t *currentItem, *previousItem;
+  previousItem = list->first;
+  currentItem  = list->first;
+  while(currentItem != NULL) {
+    if(currentItem->pid == pid) {
+      previousItem->next = currentItem->next;
+      free(currentItem);
+      break;
+    }
+    else {
+      previousItem = currentItem;
+      currentItem = currentItem->next;
+    }
+  }
+  if( currentItem == NULL)
+   printf("[\e[31mERROR\e[0m : delete_process] There is no process on the list with the pid: %d\n", pid );
 }
 
 
-void lst_print(list_t *list)
-{
+
+void lst_print(list_t *list){
 	lst_iitem_t *item;
 
 	printf("Process list with start and end time:\n");
 	item = list->first;
-	//while(1){ /* use it only to demonstrate gdb potencial */
 	while (item != NULL){
 		printf("%d\t%s", item->pid, ctime(&(item->starttime)));
 		printf("\t%s", ctime(&(item->endtime)));

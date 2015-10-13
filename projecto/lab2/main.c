@@ -20,13 +20,11 @@
 	void lst_destroy(list_t *list)
 */
 /**/
-list_t* lista_processos;
-int children = 0;
 
 
 void *tarefa_monitora(){
 	//if(__DEBUG__)
-		printf("Estamos na tarefa_monitora %d\n", (int) pthread_self() );
+		printf("\e[36mEstamos na tarefa_monitora %d\e[0m\n", (int) pthread_self() );
 		/*
 	int status;
 	time_t * endtime;
@@ -52,10 +50,12 @@ void *tarefa_monitora(){
 }
 
 int main(int argc, char *argv[]){
+	list_t* lista_processos;
 	lista_processos= lst_new();
 	char **argVector;
 	int i;
 	int _exit = 0;
+	int children = 0;
 	// o argVector ira guardar o input do utilizador na par-shell. O seu tamanho coincide
 	// com o numero maximo de argumentos permitidos mais um, que corresponde ao nome do
 	// proprio comando
@@ -64,14 +64,15 @@ int main(int argc, char *argv[]){
 	/*Aula teorica */
 	pthread_t tid;
 	if(pthread_create (&tid, 0,tarefa_monitora, NULL) == 0)	{
-		if(__DEBUG__){
-			printf ("Criada a tarefa %d\n",(int) tid);
-		}
+		//if(__DEBUG__){
+			printf ("\e[36mCriada a tarefa %d\e[0m\n",(int) tid);
+		//}
 	}
 	else {
 		printf("\e[31mErro \e[0m na criação da tarefa\n");
 		exit(1);
 	}
+
   /**/
 
 	// loop infinito de execucao da par-shell
@@ -96,14 +97,12 @@ int main(int argc, char *argv[]){
 
 			}else if(pid > 0) {
 				// PROCESSO PAI
-				
+
 				/* children_mutex.lock() FIXME*/
 				children++;
 				/* children_mutex.unlock() FIXME*/
-				time_t * starttime;
 				/*lista_mutex.lock()*/
-				time(starttime);
-				insert_new_process(lista_processos, pid, *starttime);
+				insert_new_process(lista_processos, pid, time(NULL));
 				/*lista_mutex.unlock()*/
 
 			}else{
@@ -112,13 +111,13 @@ int main(int argc, char *argv[]){
 
 				if(execv(argVector[0], argVector)){
 					if(__DEBUG__){
-						printf("o comando nao existe na directoria actual.\n");
+						printf("\e[36mo comando nao existe na directoria actual.\e[0m\n");
 					}
 				}
 				// o processo continua se nao tiver sido possivel fazer a substituicao do executavel na directoria actual
 				if(execvp(argVector[0], argVector)){
 					if(__DEBUG__){
-						printf("o comando nao existe em lado nenhum.\n");
+						printf("\e[36mo comando nao existe em lado nenhum.\e[0m\n");
 					}
 
 					// caso nao tenha sido possivel fazer a substituicao do executavel do processo,
@@ -140,17 +139,22 @@ int main(int argc, char *argv[]){
 
 	for(i = 0; i < children; i++){
 		if(__DEBUG__){
-			printf("\t%d processes remaining\n", children - i);
+			printf("\e[36m\t%d processes remaining\n\e[0m", children - i);
 		}
 		// aguarda pela terminacao dos processos filhos
 		pid_t ret = wait(&status);
 		// regista o pid do processo acabado de terminar e o respectivo return status
 		outpid[i] = ret;
 		outstatus[i] = status;
-		time( endtime );
-		update_terminated_process(lista_processos, ret, *endtime);
+		if(WIFEXITED(status)){
+			update_terminated_process(lista_processos, ret, time(NULL));
+		}
+		else{
+			printf("\e[31mProcess %d terminated Abruptly\e[0m\n", ret );
+			delete_process(lista_processos, ret);
+		}
 	}
-	pthread_join (tid, NULL);
+	//pthread_join (tid, NULL);
 
 	int currentStatus;
 	for(i = 0; i < children; i++){
@@ -160,6 +164,7 @@ int main(int argc, char *argv[]){
 			printf("Process %d terminated with status %d\n", outpid[i], WEXITSTATUS(currentStatus));
 		}
 	}
+
   lst_print(lista_processos);
 	lst_destroy(lista_processos);
 
