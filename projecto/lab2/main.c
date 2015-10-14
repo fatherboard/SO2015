@@ -11,7 +11,7 @@
 
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
-#define __DEBUG__ 1
+#define __DEBUG__ 0
 /*
 list_t* lst_new()
 void insert_new_process(list_t *list, int pid, time_t starttime)
