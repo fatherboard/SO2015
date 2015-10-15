@@ -1,30 +1,25 @@
 /*
- * list.h - definitions and declarations of the integer list
- */
-
+* list.h - definitions and declarations of the integer list
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 
-
-
 /* lst_iitem - each element of the list points to the next element */
 typedef struct lst_iitem {
-   int pid;
-   int status;
-   time_t starttime;
-   time_t endtime;
-   time_t time_dif;
-   struct lst_iitem *next;
+    int pid;
+    int status;
+    time_t starttime;
+    time_t endtime;
+    time_t time_dif;
+    struct lst_iitem *next;
 } lst_iitem_t;
 
 /* list_t */
 typedef struct {
-   lst_iitem_t * first;
+    lst_iitem_t * first;
 } list_t;
-
-
 
 /* lst_new - allocates memory for list_t and initializes it */
 list_t* lst_new();

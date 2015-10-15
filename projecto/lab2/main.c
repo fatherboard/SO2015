@@ -13,77 +13,93 @@
 #define ARG_LEN 256
 #define __DEBUG__ 0
 /*
-	list_t* lst_new()
-	void insert_new_process(list_t *list, int pid, time_t starttime)
-	void update_terminated_process(list_t *list, int pid, time_t endtime)
-	void lst_print(list_t *list)
-	void lst_destroy(list_t *list)
+list_t* lst_new()
+void insert_new_process(list_t *list, int pid, time_t starttime)
+void update_terminated_process(list_t *list, int pid, time_t endtime)
+void lst_print(list_t *list)
+void lst_destroy(list_t *list)
 */
 /**/
 
+// alocacao da lista para registo dos processos
+list_t *lista_processos;
+
+// variaveis globais a serem partilhadas pelas threads
+int numChildren = 0;
+int _exit_ctrl = 0;
 
 void *tarefa_monitora(){
-	//if(__DEBUG__)
+	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m Estamos na tarefa_monitora %d\n", (int) pthread_self() );
-		printf("\e[36m[ DEBUG ]\e[0m %d\n", _exit );
-	while(!_exit){sleep(1);
+
+		printf("\e[36m[ DEBUG ]\e[0m %d\n", _exit_ctrl );
+	while(!_exit_ctrl){sleep(1);
 		printf("\e[36m[ DEBUG ]\e[0m Inseide loop" );
 	}
 		printf("\n" );
 		printf("\e[36m[ DEBUG ]\e[0m Exiting %d\n", (int) pthread_self() );
 
 		/*
+
 	int status;
-	time_t * endtime;
+
 	while(1){
-		if(children > 0) {
+		if(numChildren > 0) {
+			// aguarda pela terminacao dos processos filhos
 			pid_t ret = wait(&status);
-
-			/*lista_mutex.lock()*/
-			//			time( endtime );
-			//			update_terminated_process(lista_processos, ret, *endtime);
-
-			/*lista_mutex.unlock()*/
-			/* children_mutex.lock() FIXME*/
-			//			children--;
-			/* children_mutex.unlock() FIXME*/
-			/*		}
-		else{
+			// regista o pid do processo acabado de terminar e o respectivo return status
+			if(WIFEXITED(status)){
+				update_terminated_process(lista_processos, ret, time(NULL), WEXITSTATUS(status));
+			}else{
+				printf("\e[31mProcess %d terminated Abruptly\e[0m\n", ret );
+				//delete_process(lista_processos, ret);
+			}
+			numChildren--;
+		}else{
+			if(_exit_ctrl){
+				// terminar thread
+				pthread_exit(0);
+			}
 			sleep(1);
 		}
+
+		/*lista_mutex.lock()*/
+		//			time( endtime );
+		//			update_terminated_process(lista_processos, ret, *endtime);
+
+		/*lista_mutex.unlock()*/
+		/* children_mutex.lock() FIXME*/
+		//			children--;
+		/* children_mutex.unlock() FIXME*/
+		/*		}*/
 	}
-	*/
 	return 0;
 }
 
 int main(int argc, char *argv[]){
-	list_t* lista_processos;
-	lista_processos= lst_new();
 	char **argVector;
-	int i;
-	int _exit = 0;
-	int children = 0;
 	// o argVector ira guardar o input do utilizador na par-shell. O seu tamanho coincide
 	// com o numero maximo de argumentos permitidos mais um, que corresponde ao nome do
 	// proprio comando
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
+	lista_processos = lst_new();
 
 	/*Aula teorica */
 	pthread_t tid;
 	if(pthread_create (&tid, 0,tarefa_monitora, NULL) == 0)	{
-		//if(__DEBUG__){
+		if(__DEBUG__){
 			printf ("\e[36m[ DEBUG ]\e[0m Criada a tarefa %d\e[0m\n",(int) tid);
-		//}
+		}
 	}
 	else {
 		printf("\e[31mErro \e[0m na criação da tarefa\n");
 		exit(1);
 	}
 
-  /**/
+	/**/
 
 	// loop infinito de execucao da par-shell
-	while(!_exit){
+	while(!_exit_ctrl){
 		// le os argumentos atraves da funcao fornecida
 		readLineArguments(argVector, VECTOR_SIZE);
 
@@ -93,7 +109,7 @@ int main(int argc, char *argv[]){
 		}
 
 		if(strcmp(argVector[0], "exit") == 0){
-			_exit = 1;
+			_exit_ctrl = 1;
 		}else{
 			// Criacao do processo filho
 			int pid = fork();
@@ -106,10 +122,10 @@ int main(int argc, char *argv[]){
 				// PROCESSO PAI
 
 				/* children_mutex.lock() FIXME*/
-				children++;
 				/* children_mutex.unlock() FIXME*/
 				/*lista_mutex.lock()*/
 				insert_new_process(lista_processos, pid, time(NULL));
+				numChildren++;
 				/*lista_mutex.unlock()*/
 
 			}else{
@@ -135,24 +151,17 @@ int main(int argc, char *argv[]){
 			}
 		}
 	}
-	// quando sai, verifica se todos os filhos que criou ja terminaram e espera pelos que ainda estao a correr
-	printf("Waiting for child processes to finish...\n");
-
-	// aloca memoria necessaria para a monitorizacao da terminacao dos processos filho
-	int *outpid = (int *) malloc(sizeof(int) * children);
-	int *outstatus = (int *) malloc(sizeof(int) * children);
+	// quando sai, a thread principal sincroniza-se com a monitora
+	printf("Joining monitoring thread...\n");
 	int status;
-	time_t * endtime;
-
-	for(i = 0; i < children; i++){
+	int i;
+	for( i = 0; i < numChildren; i++){
 		if(__DEBUG__){
-			printf("\e[36m[ DEBUG ]\e[0m\t%d processes remaining\n", children - i);
+			printf("\e[36m[ DEBUG ]\e[0m\t%d processes remaining\n", numChildren - i);
 		}
 		// aguarda pela terminacao dos processos filhos
 		pid_t ret = wait(&status);
 		// regista o pid do processo acabado de terminar e o respectivo return status
-		outpid[i] = ret;
-		outstatus[i] = status;
 		if(WIFEXITED(status)){
 			update_terminated_process(lista_processos, ret, time(NULL), WEXITSTATUS(status));
 		}
@@ -161,27 +170,16 @@ int main(int argc, char *argv[]){
 			delete_process(lista_processos, ret);
 		}
 	}
-	//pthread_join (tid, NULL);
 
-	/*TODO probably garbage*/
-	int currentStatus;
-	for(i = 0; i < children; i++){
-		// apresenta no ecra o exit status reportado por cada processo filho e o respectivo pid
-		currentStatus = outstatus[i];
-		if(WIFEXITED(currentStatus)){
-			printf("Process %d terminated with status %d\n", outpid[i], WEXITSTATUS(currentStatus));
-		}
+	if(__DEBUG__){
+		printf("\e[36m[ DEBUG ]\e[0m\twaiting for monitoring thread to finish\n");
 	}
-	/*TODO end ^ */
+	pthread_join(tid, NULL);
 
-  lst_print(lista_processos);
+	lst_print(lista_processos);
 	lst_destroy(lista_processos);
 
-	printf("All child processes finished\n");
-
 	// liberta a memoria alocada
-	free(outpid);
-	free(outstatus);
 	free(argVector);
 
 	// da a mensagem de fim do programa

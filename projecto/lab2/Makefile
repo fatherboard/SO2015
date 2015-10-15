@@ -6,8 +6,8 @@ par-shell: list.c main.c commandlinereader.c
 fib: fibonacci.c commandlinereader.c
 	gcc fibonacci.c commandlinereader.c -g -Wall -o fib
 
-fail: teste_failure.c
-	gcc teste_failure.c -g -Wall -o fail
+fail: fail.c
+	gcc fail.c -g -Wall -o fail
 
 seg_fault: seg_fault.c
 	gcc seg_fault.c -w -g -Wall -o seg_fault
