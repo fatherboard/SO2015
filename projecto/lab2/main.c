@@ -25,6 +25,13 @@
 void *tarefa_monitora(){
 	//if(__DEBUG__)
 		printf("\e[36m[ DEBUG ]\e[0m Estamos na tarefa_monitora %d\n", (int) pthread_self() );
+		printf("\e[36m[ DEBUG ]\e[0m %d\n", _exit );
+	while(!_exit){sleep(1);
+		printf("\e[36m[ DEBUG ]\e[0m Inseide loop" );
+	}
+		printf("\n" );
+		printf("\e[36m[ DEBUG ]\e[0m Exiting %d\n", (int) pthread_self() );
+
 		/*
 	int status;
 	time_t * endtime;
@@ -147,7 +154,7 @@ int main(int argc, char *argv[]){
 		outpid[i] = ret;
 		outstatus[i] = status;
 		if(WIFEXITED(status)){
-			update_terminated_process(lista_processos, ret, time(NULL), WEXITSTATUS(currentStatus));
+			update_terminated_process(lista_processos, ret, time(NULL), WEXITSTATUS(status));
 		}
 		else{
 			printf("\e[31mProcess %d terminated Abruptly\e[0m\n", ret );

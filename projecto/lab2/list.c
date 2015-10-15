@@ -91,7 +91,7 @@ void lst_print(list_t *list){
 	item = list->first;
 	while (item != NULL){
     printf("Process with pid: %d terminated with status %d\n",item->pid,item->status );
-		printf("\tStarting time:\t%s", item->pid, ctime(&(item->starttime)));
+		printf("\tStarting time:\t%s", ctime(&(item->starttime)));
 		printf("\t  Ending time:\t%s", ctime(&(item->endtime)));
 		item = item->next;
 	}
