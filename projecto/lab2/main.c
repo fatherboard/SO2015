@@ -8,7 +8,6 @@
 #include "commandlinereader.h"
 #include "list.h"
 
-
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define __DEBUG__ 0
@@ -31,15 +30,27 @@ int _exit_ctrl = 0;
 void *tarefa_monitora(){
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m Estamos na tarefa_monitora %d\n", (int) pthread_self() );
-
+  }
+/*
 		printf("\e[36m[ DEBUG ]\e[0m %d\n", _exit_ctrl );
-	while(!_exit_ctrl){sleep(1);
-		printf("\e[36m[ DEBUG ]\e[0m Inseide loop" );
-	}
-		printf("\n" );
-		printf("\e[36m[ DEBUG ]\e[0m Exiting %d\n", (int) pthread_self() );
 
-		/*
+	while(!_exit_ctrl){
+		if(WIFEXITED(status)){
+			update_terminated_process(lista_processos, ret, time(NULL), WEXITSTATUS(status));
+		}
+		else{
+			printf("\e[31mProcess %d terminated Abruptly\e[0m\n", ret );
+			delete_process(lista_processos, ret);
+		}
+		sleep(1);
+
+	}
+	lst_print(lista_processos);
+	printf("\e[36m[ DEBUG ]\e[0m numChildren: %d\n", numChildren );
+
+	printf("\n" );
+	printf("\e[36m[ DEBUG ]\e[0m Exiting %d\n", (int) pthread_self() );
+*/
 
 	int status;
 
@@ -48,13 +59,19 @@ void *tarefa_monitora(){
 			// aguarda pela terminacao dos processos filhos
 			pid_t ret = wait(&status);
 			// regista o pid do processo acabado de terminar e o respectivo return status
+			printf("%d\n", (int) ret );
+			/*lista_mutex.lock()*/
 			if(WIFEXITED(status)){
 				update_terminated_process(lista_processos, ret, time(NULL), WEXITSTATUS(status));
 			}else{
-				printf("\e[31mProcess %d terminated Abruptly\e[0m\n", ret );
-				//delete_process(lista_processos, ret);
+				printf("[\e[31m ERROR \e[0m] Process %d terminated Abruptly\n", ret );
+				delete_process(lista_processos, ret);
 			}
+			/*lista_mutex.unlock()*/
+
+			/*children_mutex.lock() FIXME*/
 			numChildren--;
+			/* children_mutex.unlock() FIXME*/
 		}else{
 			if(_exit_ctrl){
 				// terminar thread
@@ -62,19 +79,9 @@ void *tarefa_monitora(){
 			}
 			sleep(1);
 		}
-
-		/*lista_mutex.lock()*/
-		//			time( endtime );
-		//			update_terminated_process(lista_processos, ret, *endtime);
-
-		/*lista_mutex.unlock()*/
-		/* children_mutex.lock() FIXME*/
-		//			children--;
-		/* children_mutex.unlock() FIXME*/
-		/*		}*/
 	}
-	return 0;
 }
+
 
 int main(int argc, char *argv[]){
 	char **argVector;
@@ -92,7 +99,7 @@ int main(int argc, char *argv[]){
 		}
 	}
 	else {
-		printf("\e[31mErro \e[0m na criação da tarefa\n");
+		printf("\e[31m ERROR \e[0m]  na criação da tarefa\n");
 		exit(1);
 	}
 
@@ -152,24 +159,7 @@ int main(int argc, char *argv[]){
 		}
 	}
 	// quando sai, a thread principal sincroniza-se com a monitora
-	printf("Joining monitoring thread...\n");
-	int status;
-	int i;
-	for( i = 0; i < numChildren; i++){
-		if(__DEBUG__){
-			printf("\e[36m[ DEBUG ]\e[0m\t%d processes remaining\n", numChildren - i);
-		}
-		// aguarda pela terminacao dos processos filhos
-		pid_t ret = wait(&status);
-		// regista o pid do processo acabado de terminar e o respectivo return status
-		if(WIFEXITED(status)){
-			update_terminated_process(lista_processos, ret, time(NULL), WEXITSTATUS(status));
-		}
-		else{
-			printf("\e[31mProcess %d terminated Abruptly\e[0m\n", ret );
-			delete_process(lista_processos, ret);
-		}
-	}
+	printf("\nJoining monitoring thread...\n\n");
 
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m\twaiting for monitoring thread to finish\n");

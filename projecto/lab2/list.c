@@ -44,6 +44,8 @@ void insert_new_process(list_t *list, int pid, time_t starttime)
 // procura pelo elemento com esse valor de pid e atualiza esse elemento com o tempo de fim.
 void update_terminated_process(list_t *list, int pid, time_t endtime, int status)
 {
+    printf("[\e[36m Inserting a process\e[0m ]\n");
+
     lst_iitem_t *aux = list->first;
     while(aux != NULL){
         if(aux->pid == pid){
@@ -54,32 +56,38 @@ void update_terminated_process(list_t *list, int pid, time_t endtime, int status
         aux = aux->next;
     }
     if( aux == NULL)
-    printf("[\e[31mERROR\e[0m : update_terminated_process] There is no process on the list with the pid: %d\n", pid );
+    printf("[\e[31m ERROR \e[0m : update_terminated_process] There is no process on the list with the pid: %d\n", pid );
     //   printf("teminated process with pid: %d\n", pid);
 }
 
 void delete_process(list_t *list, int pid){
     lst_iitem_t *currentItem, *previousItem;
-    previousItem = list->first;
-    currentItem  = list->first;
-    while(currentItem != NULL) {
-        if(currentItem->pid == pid) {
-            previousItem->next = currentItem->next;
-            free(currentItem);
-            break;
-        }
-        else {
-            previousItem = currentItem;
-            currentItem = currentItem->next;
-        }
+    currentItem = list->first;
+    if(list->first->pid == pid) {
+      list->first = list->first->next;
+      free(currentItem);
     }
-    if( currentItem == NULL)
-    printf("[\e[31mERROR\e[0m : delete_process] There is no process on the list with the pid: %d\n", pid );
+    else{
+      previousItem = list->first;
+      while(currentItem != NULL) {
+          if(currentItem->pid == pid) {
+              previousItem->next = currentItem->next;
+              free(currentItem);
+              break;
+          }
+          else {
+              previousItem = currentItem;
+              currentItem = currentItem->next;
+          }
+      }
+      if( currentItem == NULL)
+        printf("[\e[31mERROR\e[0m : delete_process] There is no process on the list with the pid: %d\n", pid );
+    }
 }
 
 void lst_print(list_t *list){
     lst_iitem_t *item;
-
+    
     printf("Process list with start and end time:\n");
     item = list->first;
     while (item != NULL){
