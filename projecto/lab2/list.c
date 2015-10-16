@@ -44,7 +44,6 @@ void insert_new_process(list_t *list, int pid, time_t starttime)
 // procura pelo elemento com esse valor de pid e atualiza esse elemento com o tempo de fim.
 void update_terminated_process(list_t *list, int pid, time_t endtime, int status)
 {
-    printf("[\e[36m Inserting a process\e[0m ]\n");
 
     lst_iitem_t *aux = list->first;
     while(aux != NULL){
@@ -87,7 +86,7 @@ void delete_process(list_t *list, int pid){
 
 void lst_print(list_t *list){
     lst_iitem_t *item;
-    
+
     printf("Process list with start and end time:\n");
     item = list->first;
     while (item != NULL){
