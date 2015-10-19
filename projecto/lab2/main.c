@@ -17,10 +17,8 @@ pthread_mutex_t children_mutex;
 pthread_mutex_t lista_mutex;
 
 
-// alocacao da lista para registo dos processos
-list_t *lista_processos;
-
 // variaveis globais a serem partilhadas pelas threads
+list_t *lista_processos;
 int numChildren = 0;
 int _exit_ctrl = 0;
 
@@ -43,10 +41,12 @@ void *tarefa_monitora(){
 				printf("\e[36m[ DEBUG ]\e[0m Process %d has just finished\n", (int) ret );
 
 			if(WIFEXITED(status)){
+				//atulizacao do tempo de fim do processo
 				pthread_mutex_lock(&lista_mutex);
 				update_terminated_process(lista_processos, ret, time(NULL), WEXITSTATUS(status));
 				pthread_mutex_unlock(&lista_mutex);
 			}else{
+				//Eliminacao da lista de um processo no qual ocorreu um erro (ex. seg fault)
 				pthread_mutex_lock(&lista_mutex);
 				delete_process(lista_processos, ret);
 				pthread_mutex_unlock(&lista_mutex);
@@ -76,6 +76,7 @@ int main(int argc, char *argv[]){
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
 	lista_processos = lst_new();
 
+	// Inicializacao dos mutex
 	if (pthread_mutex_init(&children_mutex, NULL) != 0){
         printf("\e[31m[ ERROR ]\e[0m children_mutex init failed\n");
         exit(EXIT_FAILURE);
@@ -96,8 +97,6 @@ int main(int argc, char *argv[]){
 		printf("\e[31m[ ERROR ]\e[0m na criação da tarefa\n");
 		exit(EXIT_FAILURE);
 	}
-
-	/**/
 
 	// loop infinito de execucao da par-shell
 	while(!_exit_ctrl){
@@ -123,6 +122,7 @@ int main(int argc, char *argv[]){
 				// PROCESSO PAI
 
 				pthread_mutex_lock(&lista_mutex);
+				//Introducao de processo na lista
 				insert_new_process(lista_processos, pid, time(NULL));
 				pthread_mutex_unlock(&lista_mutex);
 
@@ -160,15 +160,14 @@ int main(int argc, char *argv[]){
 	pthread_mutex_destroy(&children_mutex);
 	pthread_mutex_destroy(&lista_mutex);
 
+	// liberta a memoria alocada
 	lst_print(lista_processos);
 	lst_destroy(lista_processos);
-
-	// liberta a memoria alocada
 	free(argVector);
 
 	// da a mensagem de fim do programa
 	printf("\e[33m[ INFO ]\e[0m Par-shell terminated\n");
 	printf("\e[33m[ INFO ]\e[0m exiting..\n");
-	// termina com o estado de execucao bem sucedida
+
 	exit(EXIT_SUCCESS);
 }
