@@ -55,7 +55,7 @@ void update_terminated_process(list_t *list, int pid, time_t endtime, int status
         aux = aux->next;
     }
     if( aux == NULL)
-    printf("[\e[31m ERROR \e[0m : update_terminated_process] There is no process on the list with the pid: %d\n", pid );
+    printf("\e[31m[ ERROR ]\e[0m update_terminated_process: There is no process on the list with the pid: %d\n", pid );
     //   printf("teminated process with pid: %d\n", pid);
 }
 
@@ -80,14 +80,14 @@ void delete_process(list_t *list, int pid){
           }
       }
       if( currentItem == NULL)
-        printf("[\e[31mERROR\e[0m : delete_process] There is no process on the list with the pid: %d\n", pid );
+        printf("\e[31m[ ERROR ]\e[0m delete_process: There is no process on the list with the pid: %d\n", pid );
     }
 }
 
 void lst_print(list_t *list){
     lst_iitem_t *item;
 
-    printf("Process list with start and end time:\n");
+    printf("\e[33m[ INFO ]\e[0m Process list with start and end time:\n");
     item = list->first;
     while (item != NULL){
         printf("Process with pid: %d terminated with status %d\n",item->pid,item->status );
@@ -103,5 +103,5 @@ void lst_print(list_t *list){
         }
         item = item->next;
     }
-    printf("-- end of list.\n");
+    printf("\e[33m[ INFO ]\e[0m end of list.\n");
 }

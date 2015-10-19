@@ -11,14 +11,7 @@
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define __DEBUG__ 0
-/*
-list_t* lst_new()
-void insert_new_process(list_t *list, int pid, time_t starttime)
-void update_terminated_process(list_t *list, int pid, time_t endtime)
-void lst_print(list_t *list)
-void lst_destroy(list_t *list)
-*/
-/**/
+
 
 pthread_mutex_t children_mutex;
 pthread_mutex_t lista_mutex;
@@ -39,7 +32,9 @@ void *tarefa_monitora(){
 	int status;
 
 	while(1){
+		pthread_mutex_lock(&children_mutex);
 		if(numChildren > 0) {
+			pthread_mutex_unlock(&children_mutex);
 			// aguarda pela terminacao dos processos filhos
 			pid_t ret = wait(&status);
 
@@ -47,28 +42,31 @@ void *tarefa_monitora(){
 			if(__DEBUG__)
 				printf("\e[36m[ DEBUG ]\e[0m Process %d has just finished\n", (int) ret );
 
-			pthread_mutex_lock(&lista_mutex);
 			if(WIFEXITED(status)){
+				pthread_mutex_lock(&lista_mutex);
 				update_terminated_process(lista_processos, ret, time(NULL), WEXITSTATUS(status));
+				pthread_mutex_unlock(&lista_mutex);
 			}else{
-				printf("[\e[31m ERROR \e[0m] Process %d terminated Abruptly\n", ret );
+				pthread_mutex_lock(&lista_mutex);
 				delete_process(lista_processos, ret);
+				pthread_mutex_unlock(&lista_mutex);
+				printf("\e[31m[ ERROR ]\e[0m Process %d terminated Abruptly\n", ret );
 			}
-			pthread_mutex_unlock(&lista_mutex);
 
 			pthread_mutex_lock(&children_mutex);
 			numChildren--;
 			pthread_mutex_unlock(&children_mutex);
 		}else{
 			if(_exit_ctrl){
+				pthread_mutex_unlock(&children_mutex);
 				// terminar thread
 				pthread_exit(0);
 			}
+			pthread_mutex_unlock(&children_mutex);
 			sleep(1);
 		}
 	}
 }
-
 
 int main(int argc, char *argv[]){
 	char **argVector;
@@ -79,11 +77,11 @@ int main(int argc, char *argv[]){
 	lista_processos = lst_new();
 
 	if (pthread_mutex_init(&children_mutex, NULL) != 0){
-        printf("\e[31m ERROR \e[0m] children_mutex init failed\n");
+        printf("\e[31m[ ERROR ]\e[0m children_mutex init failed\n");
         exit(EXIT_FAILURE);
   }
 	if (pthread_mutex_init(&lista_mutex, NULL) != 0){
-        printf("\e[31m ERROR \e[0m] lista_mutex init failed\n");
+        printf("\e[31m[ ERROR ]\e[0m lista_mutex init failed\n");
         exit(EXIT_FAILURE);
   }
 
@@ -95,7 +93,7 @@ int main(int argc, char *argv[]){
 		}
 	}
 	else {
-		printf("\e[31m ERROR \e[0m]  na criação da tarefa\n");
+		printf("\e[31m[ ERROR ]\e[0m na criação da tarefa\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -119,7 +117,7 @@ int main(int argc, char *argv[]){
 
 			if(pid < 0){
 				// erro ao criar o processo filho
-				perror("Error forking process");
+				perror("\e[31m[ Error ]\e[0m forking process");
 
 			}else if(pid > 0) {
 				// PROCESSO PAI
@@ -156,12 +154,9 @@ int main(int argc, char *argv[]){
 		}
 	}
 	// quando sai, a thread principal sincroniza-se com a monitora
-	printf("\nJoining monitoring thread...\n\n");
-
-	if(__DEBUG__){
-		printf("\e[36m[ DEBUG ]\e[0m\twaiting for monitoring thread to finish\n");
-	}
+	printf("\n\e[33m[ INFO ]\e[0m Joining monitoring thread...\n\n");
 	pthread_join(tid, NULL);
+
 	pthread_mutex_destroy(&children_mutex);
 	pthread_mutex_destroy(&lista_mutex);
 
@@ -172,7 +167,8 @@ int main(int argc, char *argv[]){
 	free(argVector);
 
 	// da a mensagem de fim do programa
-	printf("par-shell terminated\n");
+	printf("\e[33m[ INFO ]\e[0m Par-shell terminated\n");
+	printf("\e[33m[ INFO ]\e[0m exiting..\n");
 	// termina com o estado de execucao bem sucedida
 	exit(EXIT_SUCCESS);
 }
