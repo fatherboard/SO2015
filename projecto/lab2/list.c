@@ -87,7 +87,7 @@ void delete_process(list_t *list, int pid){
 void lst_print(list_t *list){
     lst_iitem_t *item;
 
-    printf("\e[33m[ INFO ]\e[0m Process list with start and end time:\n");
+    printf("\e[33m[ INFO ]\e[0m Process list with start and end time:\n\n");
     item = list->first;
     while (item != NULL){
         printf("Process with pid: %d terminated with status %d\n",item->pid,item->status );
@@ -103,5 +103,5 @@ void lst_print(list_t *list){
         }
         item = item->next;
     }
-    printf("\e[33m[ INFO ]\e[0m end of list.\n");
+    printf("\n\e[33m[ INFO ]\e[0m end of list.\n\n");
 }
