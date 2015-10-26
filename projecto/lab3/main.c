@@ -9,19 +9,18 @@
 #include "commandlinereader.h"
 #include "list.h"
 
-
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
-#define __DEBUG__ 1
+#define __DEBUG__ 0
 
 
 
-sem_t num_processos;
-sem_t num_filhos;
+/* variaveis de sincronizaçao */
+sem_t lim_processos;
+sem_t filhos_em_execucao;
 pthread_mutex_t children_mutex;
 pthread_mutex_t lista_mutex;
-
 
 // variaveis globais a serem partilhadas pelas threads
 list_t *lista_processos;
@@ -36,17 +35,22 @@ void *tarefa_monitora(){
 	int status;
 
 	while(1){
-		sem_wait(&num_filhos);
+		/* Esperar que existam filhos em execucao */
+		sem_wait(&filhos_em_execucao);
+
 		pthread_mutex_lock(&children_mutex);
 		if(numChildren > 0) {
 			pthread_mutex_unlock(&children_mutex);
+
 			// aguarda pela terminacao dos processos filhos
 			pid_t ret = wait(&status);
+			/*Assinalar que existe menos um filho em execucao*/
+			sem_post(&lim_processos);
 
-			// regista o pid do processo acabado de terminar e o respectivo return status
 			if(__DEBUG__)
-				printf("\e[36m[ DEBUG ]\e[0m Process %d has just finished\n", (int) ret );
+				printf("\e[36m[ DEBUG ]\e[0m Process %d finished\n", (int) ret );
 
+			// regista o pid do processo acabado de terminar e o respectivo return status na lista
 			if(WIFEXITED(status)){
 				//atulizacao do tempo de fim do processo
 				pthread_mutex_lock(&lista_mutex);
@@ -60,8 +64,6 @@ void *tarefa_monitora(){
 				printf("\e[31m[ ERROR ]\e[0m Process %d terminated Abruptly\n", ret );
 			}
 
-			/*Assinalar que existe menos um filho em execucao*/
-			sem_post(&num_processos);
 
 			pthread_mutex_lock(&children_mutex);
 			numChildren--;
@@ -73,7 +75,6 @@ void *tarefa_monitora(){
 				pthread_exit(0);
 			}
 			pthread_mutex_unlock(&children_mutex);
-			//sleep(1);
 		}
 	}
 }
@@ -95,13 +96,14 @@ int main(int argc, char *argv[]){
         printf("\e[31m[ ERROR ]\e[0m lista_mutex init failed\n");
         exit(EXIT_FAILURE);
   }
+
 	/* Inicializacao dos semaforos*/
-	if(sem_init(&num_processos, 0, MAXPAR) != 0){
-        printf("\e[31m[ ERROR ]\e[0m semaphore num_processos init failed\n");
+	if(sem_init(&lim_processos, 0, MAXPAR) != 0){
+        printf("\e[31m[ ERROR ]\e[0m semaphore lim_processos init failed\n");
         exit(EXIT_FAILURE);
   }
-	if(sem_init(&num_filhos, 0,0) != 0){
-        printf("\e[31m[ ERROR ]\e[0m semaphore num_filhos init failed\n");
+	if(sem_init(&filhos_em_execucao, 0,0) != 0){
+        printf("\e[31m[ ERROR ]\e[0m semaphore filhos_em_execucao init failed\n");
         exit(EXIT_FAILURE);
   }
 
@@ -113,10 +115,12 @@ int main(int argc, char *argv[]){
 		}
 	}
 	else {
-		printf("\e[31m[ ERROR ]\e[0m na criação da tarefa\n");
+		printf("\e[31m[ ERROR ]\e[0m Creating Thread\n");
 		exit(EXIT_FAILURE);
 	}
 
+
+	printf("\e[33m[ INFO ]\e[0m Limite de processos filhos: %d\n", MAXPAR);
 	// loop infinito de execucao da par-shell
 	while(!_exit_ctrl){
 		// le os argumentos atraves da funcao fornecida
@@ -129,11 +133,11 @@ int main(int argc, char *argv[]){
 
 		if(strcmp(argVector[0], "exit") == 0){
 			_exit_ctrl = 1;
-			sem_post(&num_filhos);
+			sem_post(&filhos_em_execucao);
 		}else{
 
-			/* Espera que nao estejam a correr demasiados filhos */
-			sem_wait(&num_processos);
+			/* Esperar para que a quota de numero de processos filhos nao seja ultrapassada */
+			sem_wait(&lim_processos);
 
 			// Criacao do processo filho
 			int pid = fork();
@@ -153,10 +157,14 @@ int main(int argc, char *argv[]){
 				pthread_mutex_lock(&children_mutex);
 				numChildren++;
 				pthread_mutex_unlock(&children_mutex);
-				sem_post(&num_filhos);
+
+				/* Assinalar que existe menos um filho em execuçao */
+				sem_post(&filhos_em_execucao);
 			}else{
 				// PROCESSO FILHO
 				// substitui a imagem do executavel actual pelo especificado no comando introduzido
+				if(__DEBUG__)
+					printf("\e[36m[ DEBUG ]\e[0m Process %d has just started.\n\e[36m[ DEBUG ]\e[0m Executing: %s\n", getpid(), argVector[0] );
 
 				if(execv(argVector[0], argVector)){
 					if(__DEBUG__){
@@ -177,18 +185,18 @@ int main(int argc, char *argv[]){
 			}
 		}
 	}
-	// quando sai, a thread principal sincroniza-se com a monitora
+	// quando termina, a thread principal sincroniza-se com a monitora
 	printf("\n\e[33m[ INFO ]\e[0m Joining monitoring thread...\n\n");
 	pthread_join(tid, NULL);
 
+	// liberta a memoria alocada
 	pthread_mutex_destroy(&children_mutex);
 	pthread_mutex_destroy(&lista_mutex);
-
-	// liberta a memoria alocada
 	lst_print(lista_processos);
 	lst_destroy(lista_processos);
 	free(argVector);
-	sem_destroy(&num_filhos);
+	sem_destroy(&filhos_em_execucao);
+	sem_destroy(&lim_processos);
 
 	// da a mensagem de fim do programa
 	printf("\e[33m[ INFO ]\e[0m Par-shell terminated\n");
