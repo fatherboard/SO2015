@@ -5,17 +5,22 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include "commandlinereader.h"
 #include "list.h"
+
 
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define __DEBUG__ 0
 
-
+sem_t num_processos;
+sem_t num_filhos;
 pthread_mutex_t children_mutex;
 pthread_mutex_t lista_mutex;
 
+sem_init(&num_processos, 0, 0);
+sem_init(&num_filhos, 0, 0);
 
 // variaveis globais a serem partilhadas pelas threads
 list_t *lista_processos;
