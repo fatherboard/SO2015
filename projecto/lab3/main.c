@@ -35,6 +35,7 @@ void *tarefa_monitora(){
 	int status;
 
 	while(1){
+		sem_wait(&num_filhos);
 		pthread_mutex_lock(&children_mutex);
 		if(numChildren > 0) {
 			pthread_mutex_unlock(&children_mutex);
@@ -68,7 +69,7 @@ void *tarefa_monitora(){
 				pthread_exit(0);
 			}
 			pthread_mutex_unlock(&children_mutex);
-			sleep(1);
+			//sleep(1);
 		}
 	}
 }
@@ -115,6 +116,7 @@ int main(int argc, char *argv[]){
 
 		if(strcmp(argVector[0], "exit") == 0){
 			_exit_ctrl = 1;
+			sem_post(&num_filhos);
 		}else{
 			// Criacao do processo filho
 			int pid = fork();
@@ -134,7 +136,7 @@ int main(int argc, char *argv[]){
 				pthread_mutex_lock(&children_mutex);
 				numChildren++;
 				pthread_mutex_unlock(&children_mutex);
-
+				sem_post(&num_filhos);
 			}else{
 				// PROCESSO FILHO
 				// substitui a imagem do executavel actual pelo especificado no comando introduzido
@@ -169,6 +171,7 @@ int main(int argc, char *argv[]){
 	lst_print(lista_processos);
 	lst_destroy(lista_processos);
 	free(argVector);
+	sem_destroy(&num_filhos);
 
 	// da a mensagem de fim do programa
 	printf("\e[33m[ INFO ]\e[0m Par-shell terminated\n");
