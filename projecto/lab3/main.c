@@ -12,15 +12,16 @@
 
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
-#define __DEBUG__ 0
+#define MAXPAR 4
+#define __DEBUG__ 1
+
+
 
 sem_t num_processos;
 sem_t num_filhos;
 pthread_mutex_t children_mutex;
 pthread_mutex_t lista_mutex;
 
-sem_init(&num_processos, 0, 0);
-sem_init(&num_filhos, 0, 0);
 
 // variaveis globais a serem partilhadas pelas threads
 list_t *lista_processos;
@@ -59,6 +60,9 @@ void *tarefa_monitora(){
 				printf("\e[31m[ ERROR ]\e[0m Process %d terminated Abruptly\n", ret );
 			}
 
+			/*Assinalar que existe menos um filho em execucao*/
+			sem_post(&num_processos);
+
 			pthread_mutex_lock(&children_mutex);
 			numChildren--;
 			pthread_mutex_unlock(&children_mutex);
@@ -91,6 +95,15 @@ int main(int argc, char *argv[]){
         printf("\e[31m[ ERROR ]\e[0m lista_mutex init failed\n");
         exit(EXIT_FAILURE);
   }
+	/* Inicializacao dos semaforos*/
+	if(sem_init(&num_processos, 0, MAXPAR) != 0){
+        printf("\e[31m[ ERROR ]\e[0m semaphore num_processos init failed\n");
+        exit(EXIT_FAILURE);
+  }
+	if(sem_init(&num_filhos, 0,0) != 0){
+        printf("\e[31m[ ERROR ]\e[0m semaphore num_filhos init failed\n");
+        exit(EXIT_FAILURE);
+  }
 
 	/*Criaçao da thread*/
 	pthread_t tid;
@@ -118,6 +131,10 @@ int main(int argc, char *argv[]){
 			_exit_ctrl = 1;
 			sem_post(&num_filhos);
 		}else{
+
+			/* Espera que nao estejam a correr demasiados filhos */
+			sem_wait(&num_processos);
+
 			// Criacao do processo filho
 			int pid = fork();
 
