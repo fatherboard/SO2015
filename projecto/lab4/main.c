@@ -1,6 +1,6 @@
 // Say your prayers, little one
 // Don't forget, my son to
-#include <everyone.h>
+//#include <everyone.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,14 +33,13 @@ int _exit_ctrl = 0;
 void *tarefa_monitora(){
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m Estamos na tarefa_monitora %d\n", (int) pthread_self() );
-  }
-
+	}
 	int status;
 
 	while(1){
 		/* Esperar que existam filhos em execucao */
 		sem_wait(&filhos_em_execucao);
-
+	      
 		pthread_mutex_lock(&children_mutex);
 		if(numChildren > 0) {
 			pthread_mutex_unlock(&children_mutex);
@@ -89,6 +88,29 @@ int main(int argc, char *argv[]){
 	// proprio comando
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
 	lista_processos = lst_new();
+	
+	FILE *log = fopen("log.txt","a");
+	char str_dummy[50], line[1024];
+	int int_dummy, last_iter = 0, last_exec_time = 0;
+
+	if(log == NULL){
+	  printf("Nao deu para abrir o ficheiro\n");
+	  exit(EXIT_FAILURE);
+	}
+
+	while(fgets(line, 1024, log) != NULL){
+	  if(sscanf(line, "%s %d", str_dummy, &last_iter) == 2){
+	    // last_iter
+	  }
+	  fgets(line, 1024, log);
+	  if(sscanf(line, "%s %d %s %s %d %s", str_dummy, &int_dummy, str_dummy, str_dummy, &int_dummy, str_dummy) == 6){
+	    // nothing
+	  }
+	  fgets(line, 1024, log);
+	  if(sscanf(line, "%s %s %s %d ", str_dummy, str_dummy, str_dummy, &last_exec_time) == 4){
+	   // exec_time 
+	  }
+	}
 
 	// Inicializacao dos mutex
 	if (pthread_mutex_init(&children_mutex, NULL) != 0){
