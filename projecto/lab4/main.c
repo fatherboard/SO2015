@@ -30,6 +30,9 @@ list_t *lista_processos;
 int numChildren = 0;
 int _exit_ctrl = 0;
 
+static FILE *log;
+int iteration_number = 0, total_exec_time = 0;
+
 void *tarefa_monitora(){
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m Estamos na tarefa_monitora %d\n", (int) pthread_self() );
@@ -89,17 +92,18 @@ int main(int argc, char *argv[]){
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
 	lista_processos = lst_new();
 	
-	FILE *log = fopen("log.txt","a");
 	char str_dummy[50], line[1024];
-	int int_dummy, last_iter = 0, last_exec_time = 0;
+	int int_dummy;
+	
+	log = fopen("log.txt","a+");
 
 	if(log == NULL){
-	  printf("Nao deu para abrir o ficheiro\n");
+	  printf("\e[31m[ ERROR ]\e[0m could not open log.txt\n");
 	  exit(EXIT_FAILURE);
 	}
 
 	while(fgets(line, 1024, log) != NULL){
-	  if(sscanf(line, "%s %d", str_dummy, &last_iter) == 2){
+	  if(sscanf(line, "%s %d", str_dummy, &iteration_number) == 2){
 	    // last_iter
 	  }
 	  fgets(line, 1024, log);
@@ -107,7 +111,7 @@ int main(int argc, char *argv[]){
 	    // nothing
 	  }
 	  fgets(line, 1024, log);
-	  if(sscanf(line, "%s %s %s %d ", str_dummy, str_dummy, str_dummy, &last_exec_time) == 4){
+	  if(sscanf(line, "%s %s %s %d ", str_dummy, str_dummy, str_dummy, &total_exec_time) == 4){
 	   // exec_time 
 	  }
 	}
