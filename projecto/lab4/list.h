@@ -38,3 +38,8 @@ void delete_process(list_t *list, int pid);
 
 /* lst_print - print the content of list 'list' to standard output */
 void lst_print(list_t *list);
+
+/* get_dif_time_by_pid  - returns the execution time of the process indicated by pid */
+/* if the process has not finished, the return value is undetermined */
+/* if pid does not exist, -1 is returned */
+int get_dif_time_by_pid(list_t *list, int pid);

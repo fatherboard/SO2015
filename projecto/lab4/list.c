@@ -109,3 +109,17 @@ void lst_print(list_t *list){
     }
     printf("\n\e[33m[ INFO ]\e[0m end of list.\n\n");
 }
+
+int get_dif_time_by_pid(list_t *list, int pid){
+    lst_iitem_t *item;
+    
+    item = list->first;
+    while(item != NULL){
+	if(item->pid == pid){
+	    item->time_dif = item->endtime - item->starttime;
+	    return (int) item->time_dif;
+	}
+	item = item->next;
+    }
+    return -1;
+}

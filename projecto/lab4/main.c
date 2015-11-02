@@ -37,7 +37,7 @@ void *tarefa_monitora(){
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m Estamos na tarefa_monitora %d\n", (int) pthread_self() );
 	}
-	int status;
+	int status, dif;
 
 	while(1){
 		/* Esperar que existam filhos em execucao */
@@ -68,7 +68,14 @@ void *tarefa_monitora(){
 				pthread_mutex_unlock(&lista_mutex);
 				printf("\e[31m[ ERROR ]\e[0m Process %d terminated Abruptly\n", ret );
 			}
-
+			
+			dif = get_dif_time_by_pid(lista_processos, ret);
+			total_exec_time += dif;
+			fprintf(log, "iteracao %d\n", iteration_number);
+			fprintf(log, "pid: %d execution time: %d\n", ret, dif);
+			fprintf(log, "total execution time: %d s\n", total_exec_time);
+			fflush(log);
+			iteration_number++;
 
 			pthread_mutex_lock(&children_mutex);
 			numChildren--;
@@ -104,7 +111,7 @@ int main(int argc, char *argv[]){
 
 	while(fgets(line, 1024, log) != NULL){
 	  if(sscanf(line, "%s %d", str_dummy, &iteration_number) == 2){
-	    // last_iter
+	    iteration_number++;
 	  }
 	  fgets(line, 1024, log);
 	  if(sscanf(line, "%s %d %s %s %d %s", str_dummy, &int_dummy, str_dummy, str_dummy, &int_dummy, str_dummy) == 6){
@@ -226,6 +233,7 @@ int main(int argc, char *argv[]){
 	free(argVector);
 	sem_destroy(&filhos_em_execucao);
 	sem_destroy(&lim_processos);
+	fclose(log);
 
 	// da a mensagem de fim do programa
 	printf("\e[33m[ INFO ]\e[0m Par-shell terminated\n");
