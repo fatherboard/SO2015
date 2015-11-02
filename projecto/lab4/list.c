@@ -42,13 +42,15 @@ void insert_new_process(list_t *list, int pid, time_t starttime)
 
 // Implemente a função update_terminated_process. A função update_terminated_process recebe uma lista, um valor de pid e um tempo de fim,
 // procura pelo elemento com esse valor de pid e atualiza esse elemento com o tempo de fim.
-void update_terminated_process(list_t *list, int pid, time_t endtime, int status)
+int update_terminated_process(list_t *list, int pid, time_t endtime, int status)
 {
 
+    int dif_time;
     lst_iitem_t *aux = list->first;
     while(aux != NULL){
         if(aux->pid == pid){
             aux->endtime = endtime;
+	    dif_time = (int) aux->endtime - aux->starttime;
             aux->status = status;
             break;
         }
@@ -57,6 +59,8 @@ void update_terminated_process(list_t *list, int pid, time_t endtime, int status
     if( aux == NULL)
     printf("\e[31m[ ERROR ]\e[0m update_terminated_process: There is no process on the list with the pid: %d\n", pid );
     //   printf("teminated process with pid: %d\n", pid);
+    
+    return dif_time;
 }
 
 void delete_process(list_t *list, int pid){
