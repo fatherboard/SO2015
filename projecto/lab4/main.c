@@ -20,8 +20,12 @@
 
 
 /* variaveis de sincronizaçao */
-sem_t lim_processos;
-sem_t filhos_em_execucao;
+//sem_t lim_processos;
+//sem_t filhos_em_execucao;
+pthread_cond_t lim_processos;
+pthread_cond_t filhos_em_execucao;
+pthread_mutex_t lim_processos_lock;
+pthread_mutex_t filhos_em_execucao_lock;
 pthread_mutex_t children_mutex;
 pthread_mutex_t lista_mutex;
 
@@ -41,7 +45,10 @@ void *tarefa_monitora(){
 
 	while(1){
 		/* Esperar que existam filhos em execucao */
-		sem_wait(&filhos_em_execucao);
+		//pthread_mutex_lock(&filhos_em_execucao_lock);
+		pthread_cond_wait(&filhos_em_execucao, &filhos_em_execucao_lock);
+		//pthread_mutex_unlock(&filhos_em_execucao_lock);
+		//sem_wait(&filhos_em_execucao);
 	      
 		pthread_mutex_lock(&children_mutex);
 		if(numChildren > 0) {
@@ -50,7 +57,10 @@ void *tarefa_monitora(){
 			// aguarda pela terminacao dos processos filhos
 			pid_t ret = wait(&status);
 			/*Assinalar que existe menos um filho em execucao*/
-			sem_post(&lim_processos);
+			//sem_post(&lim_processos);
+			//pthread_mutex_lock(&lim_processos_lock);
+			pthread_cond_wait(&lim_processos, &lim_processos_lock);
+			//pthread_mutex_unlock(&lim_processos_lock);
 
 			if(__DEBUG__)
 				printf("\e[36m[ DEBUG ]\e[0m Process %d finished\n", (int) ret );
@@ -133,15 +143,36 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);
   }
 
+	if (pthread_mutex_init(&filhos_em_execucao_lock, NULL) != 0){
+        printf("\e[31m[ ERROR ]\e[0m filhos_em_execucao_lock init failed\n");
+        exit(EXIT_FAILURE);
+  }
+	if (pthread_mutex_init(&lim_processos_lock, NULL) != 0){
+        printf("\e[31m[ ERROR ]\e[0m lim_processos_lock init failed\n");
+        exit(EXIT_FAILURE);
+  }
+
 	/* Inicializacao dos semaforos*/
-	if(sem_init(&lim_processos, 0, MAXPAR) != 0){
+	/*if(sem_init(&lim_processos, 0, MAXPAR) != 0){
         printf("\e[31m[ ERROR ]\e[0m semaphore lim_processos init failed\n");
         exit(EXIT_FAILURE);
   }
 	if(sem_init(&filhos_em_execucao, 0,0) != 0){
         printf("\e[31m[ ERROR ]\e[0m semaphore filhos_em_execucao init failed\n");
         exit(EXIT_FAILURE);
+  }*/
+
+
+	/* Inicializacao das variaveis de condicao*/
+	if(pthread_cond_init(&lim_processos, NULL) != 0){
+        printf("\e[31m[ ERROR ]\e[0m condition variable lim_processos init failed\n");
+        exit(EXIT_FAILURE);
   }
+	if(pthread_cond_init(&filhos_em_execucao, NULL) != 0){
+        printf("\e[31m[ ERROR ]\e[0m condition variable filhos_em_execucao init failed\n");
+        exit(EXIT_FAILURE);
+  }
+
 
 	/*Criaçao da thread*/
 	pthread_t tid;
@@ -169,11 +200,18 @@ int main(int argc, char *argv[]){
 
 		if(strcmp(argVector[0], "exit") == 0){
 			_exit_ctrl = 1;
-			sem_post(&filhos_em_execucao);
+			//sem_post(&filhos_em_execucao);
+			//pthread_mutex_lock(&filhos_em_execucao_lock);
+			pthread_cond_signal(&filhos_em_execucao);
+			//pthread_mutex_unlock(&filhos_em_execucao_lock);
+
 		}else{
 
 			/* Esperar para que a quota de numero de processos filhos nao seja ultrapassada */
-			sem_wait(&lim_processos);
+			//sem_wait(&lim_processos);
+			//pthread_mutex_lock(&lim_processos_lock);
+			pthread_cond_wait(&lim_processos, &lim_processos_lock);
+			//pthread_mutex_unlock(&lim_processos_lock);
 
 			// Criacao do processo filho
 			int pid = fork();
@@ -194,8 +232,12 @@ int main(int argc, char *argv[]){
 				numChildren++;
 				pthread_mutex_unlock(&children_mutex);
 
-				/* Assinalar que existe menos um filho em execuçao */
-				sem_post(&filhos_em_execucao);
+				/* Assinalar que existe menos (?) um filho em execuçao */
+				//sem_post(&filhos_em_execucao);
+				//pthread_mutex_lock(&filhos_em_execucao_lock);
+				pthread_cond_signal(&filhos_em_execucao);
+				//pthread_mutex_unlock(&filhos_em_execucao_lock);
+
 			}else{
 				// PROCESSO FILHO
 				// substitui a imagem do executavel actual pelo especificado no comando introduzido
@@ -228,11 +270,15 @@ int main(int argc, char *argv[]){
 	// liberta a memoria alocada
 	pthread_mutex_destroy(&children_mutex);
 	pthread_mutex_destroy(&lista_mutex);
+	pthread_mutex_destroy(&lim_processos_lock);
+	pthread_mutex_destroy(&filhos_em_execucao_lock);
 	lst_print(lista_processos);
 	lst_destroy(lista_processos);
 	free(argVector);
-	sem_destroy(&filhos_em_execucao);
-	sem_destroy(&lim_processos);
+	/*sem_destroy(&filhos_em_execucao);
+	sem_destroy(&lim_processos);*/
+	pthread_cond_destroy(&filhos_em_execucao);
+	pthread_cond_destroy(&lim_processos);
 	fclose(log);
 
 	// da a mensagem de fim do programa
