@@ -14,8 +14,8 @@
 
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
-#define MAXPAR 4
-#define __DEBUG__ 0
+#define MAXPAR 2
+#define __DEBUG__ 1
 
 
 
@@ -24,6 +24,7 @@
 //sem_t filhos_em_execucao;
 pthread_cond_t lim_processos;
 pthread_cond_t filhos_em_execucao;
+
 pthread_mutex_t lim_processos_lock;
 pthread_mutex_t filhos_em_execucao_lock;
 pthread_mutex_t children_mutex;
@@ -32,6 +33,7 @@ pthread_mutex_t lista_mutex;
 // variaveis globais a serem partilhadas pelas threads
 list_t *lista_processos;
 int numChildren = 0;
+int nrActualProcessosFilho = 0;
 int _exit_ctrl = 0;
 
 static FILE *log;
@@ -45,22 +47,21 @@ void *tarefa_monitora(){
 
 	while(1){
 		/* Esperar que existam filhos em execucao */
-		//pthread_mutex_lock(&filhos_em_execucao_lock);
-		pthread_cond_wait(&filhos_em_execucao, &filhos_em_execucao_lock);
-		//pthread_mutex_unlock(&filhos_em_execucao_lock);
+
+		pthread_mutex_lock(&filhos_em_execucao_lock);
+		while (numChildren == 0) {
+			pthread_cond_wait(&filhos_em_execucao, &filhos_em_execucao_lock);
+		}
+		pthread_mutex_unlock(&filhos_em_execucao_lock);
 		//sem_wait(&filhos_em_execucao);
-	      
+
 		pthread_mutex_lock(&children_mutex);
 		if(numChildren > 0) {
 			pthread_mutex_unlock(&children_mutex);
 
 			// aguarda pela terminacao dos processos filhos
 			pid_t ret = wait(&status);
-			/*Assinalar que existe menos um filho em execucao*/
-			//sem_post(&lim_processos);
-			//pthread_mutex_lock(&lim_processos_lock);
-			pthread_cond_wait(&lim_processos, &lim_processos_lock);
-			//pthread_mutex_unlock(&lim_processos_lock);
+
 
 			if(__DEBUG__)
 				printf("\e[36m[ DEBUG ]\e[0m Process %d finished\n", (int) ret );
@@ -70,6 +71,13 @@ void *tarefa_monitora(){
 				//atulizacao do tempo de fim do processo
 				pthread_mutex_lock(&lista_mutex);
 				update_terminated_process(lista_processos, ret, time(NULL), WEXITSTATUS(status));
+				dif = get_dif_time_by_pid(lista_processos, ret);
+				total_exec_time += dif;
+				fprintf(log, "iteracao %d\n", iteration_number);
+				fprintf(log, "pid: %d execution time: %d\n", ret, dif);
+				fprintf(log, "total execution time: %d s\n", total_exec_time);
+				fflush(log);
+				iteration_number++;
 				pthread_mutex_unlock(&lista_mutex);
 			}else{
 				//Eliminacao da lista de um processo no qual ocorreu um erro (ex. seg fault)
@@ -78,14 +86,14 @@ void *tarefa_monitora(){
 				pthread_mutex_unlock(&lista_mutex);
 				printf("\e[31m[ ERROR ]\e[0m Process %d terminated Abruptly\n", ret );
 			}
-			
-			dif = get_dif_time_by_pid(lista_processos, ret);
-			total_exec_time += dif;
-			fprintf(log, "iteracao %d\n", iteration_number);
-			fprintf(log, "pid: %d execution time: %d\n", ret, dif);
-			fprintf(log, "total execution time: %d s\n", total_exec_time);
-			fflush(log);
-			iteration_number++;
+
+
+			/*Assinalar que existe menos um filho em execucao*/
+			//sem_post(&lim_processos);
+			pthread_mutex_lock(&lim_processos_lock);
+			nrActualProcessosFilho--;
+			pthread_cond_signal(&lim_processos);
+			pthread_mutex_unlock(&lim_processos_lock);
 
 			pthread_mutex_lock(&children_mutex);
 			numChildren--;
@@ -108,12 +116,14 @@ int main(int argc, char *argv[]){
 	// proprio comando
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
 	lista_processos = lst_new();
-	
+
 	char str_dummy[50], line[1024];
 	int int_dummy;
-	
+
+	/* Abrir FIcheiro */
 	log = fopen("log.txt","a+");
 
+	/*Ler dados do ficheiro*/
 	if(log == NULL){
 	  printf("\e[31m[ ERROR ]\e[0m could not open log.txt\n");
 	  exit(EXIT_FAILURE);
@@ -129,7 +139,7 @@ int main(int argc, char *argv[]){
 	  }
 	  fgets(line, 1024, log);
 	  if(sscanf(line, "%s %s %s %d ", str_dummy, str_dummy, str_dummy, &total_exec_time) == 4){
-	   // exec_time 
+	   // exec_time
 	  }
 	}
 
@@ -188,6 +198,7 @@ int main(int argc, char *argv[]){
 
 
 	printf("\e[33m[ INFO ]\e[0m Limite de processos filhos: %d\n", MAXPAR);
+	printf("\e[33m[ INFO ]\e[0m A espera de filhos\n");
 	// loop infinito de execucao da par-shell
 	while(!_exit_ctrl){
 		// le os argumentos atraves da funcao fornecida
@@ -209,9 +220,23 @@ int main(int argc, char *argv[]){
 
 			/* Esperar para que a quota de numero de processos filhos nao seja ultrapassada */
 			//sem_wait(&lim_processos);
-			//pthread_mutex_lock(&lim_processos_lock);
-			pthread_cond_wait(&lim_processos, &lim_processos_lock);
-			//pthread_mutex_unlock(&lim_processos_lock);
+			if(__DEBUG__){
+				printf ("\e[36m[ DEBUG ]\e[0m A espera que nrActualProcessosFilho < MAXPAR\e[0m\n");
+			}
+			pthread_mutex_lock(&lim_processos_lock);
+			while( nrActualProcessosFilho >= MAXPAR) {
+				if(__DEBUG__){
+					printf ("\e[36m[ DEBUG ]\e[0m Nao devia estar aqui...\e[0m\n");
+					printf ("\e[36m[ DEBUG ]\e[0m nrActualProcessosFilho: %d\e[0m\n", nrActualProcessosFilho);
+					printf ("\e[36m[ DEBUG ]\e[0m MAXPAR :%d\e[0m\n" , MAXPAR);
+				}
+				pthread_cond_wait(&lim_processos, &lim_processos_lock);
+			}
+			nrActualProcessosFilho++;
+			pthread_mutex_unlock(&lim_processos_lock);
+			if(__DEBUG__){
+				printf ("\e[36m[ DEBUG ]\e[0m Condicao Verificada\e[0m\n");
+			}
 
 			// Criacao do processo filho
 			int pid = fork();
@@ -232,11 +257,11 @@ int main(int argc, char *argv[]){
 				numChildren++;
 				pthread_mutex_unlock(&children_mutex);
 
-				/* Assinalar que existe menos (?) um filho em execuçao */
+				/* Assinalar que existe mais um filho em execuçao */
 				//sem_post(&filhos_em_execucao);
-				//pthread_mutex_lock(&filhos_em_execucao_lock);
+				pthread_mutex_lock(&filhos_em_execucao_lock);
 				pthread_cond_signal(&filhos_em_execucao);
-				//pthread_mutex_unlock(&filhos_em_execucao_lock);
+				pthread_mutex_unlock(&filhos_em_execucao_lock);
 
 			}else{
 				// PROCESSO FILHO
