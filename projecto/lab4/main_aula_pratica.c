@@ -1,3 +1,6 @@
+// Say your prayers, little one
+// Don't forget, my son to
+//#include <everyone.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,61 +12,47 @@
 #include "commandlinereader.h"
 #include "list.h"
 
-#define EXIT_COMMAND "exit"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
-#define MAXPAR 4
-#define __DEBUG__ 0
+#define MAXPAR 2
+#define __DEBUG__ 1
 
 
 
 /* variaveis de sincronizaçao */
-//sem_t slots_processos_disponiveis;
-//sem_t comandos_escritos;
+//sem_t lim_processos;
+//sem_t filhos_em_execucao;
+pthread_cond_t lim_processos;
+pthread_cond_t filhos_em_execucao;
 
-
-/* variavel de condicao que garante que nao sao lancados mais processos que
-o limite imposto pelo MAXPAR */
-pthread_cond_t slots_processos_disponiveis;
-/* variavel de condicao que ve se existem comandos pelos quais deve
-esperar/processar */
-pthread_cond_t comandos_escritos;
-
-
-pthread_mutex_t slots_processos_disponiveis_mutex;
-pthread_mutex_t comandos_escritos_mutex;
+pthread_mutex_t lim_processos_lock;
+pthread_mutex_t children_mutex;
 pthread_mutex_t children_mutex;
 pthread_mutex_t lista_mutex;
 
 // variaveis globais a serem partilhadas pelas threads
-/* Comandos tipo fib (validos) */
 list_t *lista_processos;
 int numChildren = 0;
+int nrActualProcessosFilho = 0;
 int _exit_ctrl = 0;
-int writtenCommands = 0;
-int slotsAvaiable = MAXPAR;
+
 static FILE *log;
 int iteration_number = 0, total_exec_time = 0;
 
 void *tarefa_monitora(){
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m Estamos na tarefa_monitora %d\n", (int) pthread_self() );
-  }
-
-	int status,dif;
+	}
+	int status, dif;
 
 	while(1){
+		/* Esperar que existam filhos em execucao */
 
-		/* Esperar que tenha sido escrito um comando */
-		pthread_mutex_lock(&comandos_escritos_mutex);
-		while (writtenCommands == 0) {
-			pthread_cond_wait(&comandos_escritos, &comandos_escritos_mutex);
-		}
-		writtenCommands--;
-		pthread_mutex_unlock(&comandos_escritos_mutex);
-		//sem_wait(&comandos_escritos);
-
+		//sem_wait(&filhos_em_execucao);
 		pthread_mutex_lock(&children_mutex);
+		while (numChildren == 0) {
+			pthread_cond_wait(&filhos_em_execucao, &children_mutex);
+		}
 		if(numChildren > 0) {
 			pthread_mutex_unlock(&children_mutex);
 
@@ -71,16 +60,6 @@ void *tarefa_monitora(){
 			pid_t ret = wait(&status);
 
 
-			/*Check if it need FIXME*/
-			/*Assinalar que existe mais um slot*/
-			pthread_mutex_lock(&slots_processos_disponiveis_mutex);
-			/*Incrementar variavel*/
-			SlotsAvaiable++;
-			pthread_cond_signal(&slots_processos_disponiveis);
-			pthread_mutex_unlock(&slots_processos_disponiveis_mutex);
-			//sem_post(&slots_processos_disponiveis);
-			/* FIXME end */
-			
 			if(__DEBUG__)
 				printf("\e[36m[ DEBUG ]\e[0m Process %d finished\n", (int) ret );
 
@@ -106,6 +85,13 @@ void *tarefa_monitora(){
 			}
 
 
+			/*Assinalar que existe menos um filho em execucao*/
+			//sem_post(&lim_processos);
+			pthread_mutex_lock(&lim_processos_lock);
+			nrActualProcessosFilho--;
+			pthread_cond_signal(&lim_processos);
+			pthread_mutex_unlock(&lim_processos_lock);
+
 			pthread_mutex_lock(&children_mutex);
 			numChildren--;
 			pthread_mutex_unlock(&children_mutex);
@@ -128,17 +114,18 @@ int main(int argc, char *argv[]){
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
 	lista_processos = lst_new();
 
+	char str_dummy[50], line[1024];
+	int int_dummy;
 
 	/* Abrir FIcheiro */
 	log = fopen("log.txt","a+");
+
+	/*Ler dados do ficheiro*/
 	if(log == NULL){
 	  printf("\e[31m[ ERROR ]\e[0m could not open log.txt\n");
 	  exit(EXIT_FAILURE);
 	}
 
-	/*Ler dados do ficheiro*/
-	char str_dummy[50], line[1024];
-	int int_dummy;
 	while(fgets(line, 1024, log) != NULL){
 	  if(sscanf(line, "%s %d", str_dummy, &iteration_number) == 2){
 	    iteration_number++;
@@ -162,33 +149,38 @@ int main(int argc, char *argv[]){
         printf("\e[31m[ ERROR ]\e[0m lista_mutex init failed\n");
         exit(EXIT_FAILURE);
   }
-	if (pthread_mutex_init(&slots_processos_disponiveis_mutex, NULL) != 0){
-        printf("\e[31m[ ERROR ]\e[0m slots_processos_disponiveis_mutex init failed\n");
+
+	if (pthread_mutex_init(&children_mutex, NULL) != 0){
+        printf("\e[31m[ ERROR ]\e[0m children_mutex init failed\n");
         exit(EXIT_FAILURE);
   }
-	if (pthread_mutex_init(&comandos_escritos_mutex, NULL) != 0){
-        printf("\e[31m[ ERROR ]\e[0m comandos_escritos_mutex init failed\n");
+	if (pthread_mutex_init(&lim_processos_lock, NULL) != 0){
+        printf("\e[31m[ ERROR ]\e[0m lim_processos_lock init failed\n");
         exit(EXIT_FAILURE);
   }
 
 	/* Inicializacao dos semaforos*/
-	/*if(sem_init(&slots_processos_disponiveis, 0, MAXPAR) != 0){
-        printf("\e[31m[ ERROR ]\e[0m semaphore slots_processos_disponiveis init failed\n");
+	/*if(sem_init(&lim_processos, 0, MAXPAR) != 0){
+        printf("\e[31m[ ERROR ]\e[0m semaphore lim_processos init failed\n");
         exit(EXIT_FAILURE);
   }
-	if(sem_init(&comandos_escritos, 0,0) != 0){
-        printf("\e[31m[ ERROR ]\e[0m semaphore comandos_escritos init failed\n");
+	if(sem_init(&filhos_em_execucao, 0,0) != 0){
+        printf("\e[31m[ ERROR ]\e[0m semaphore filhos_em_execucao init failed\n");
         exit(EXIT_FAILURE);
   }*/
+
+
 	/* Inicializacao das variaveis de condicao*/
-	if(pthread_cond_init(&slots_processos_disponiveis, NULL) != 0){
-				printf("\e[31m[ ERROR ]\e[0m condition variable slots_processos_disponiveis init failed\n");
-				exit(EXIT_FAILURE);
-	}
-	if(pthread_cond_init(&comandos_escritos, NULL) != 0){
-				printf("\e[31m[ ERROR ]\e[0m condition variable comandos_escritos init failed\n");
-				exit(EXIT_FAILURE);
-	}
+	if(pthread_cond_init(&lim_processos, NULL) != 0){
+        printf("\e[31m[ ERROR ]\e[0m condition variable lim_processos init failed\n");
+        exit(EXIT_FAILURE);
+  }
+	if(pthread_cond_init(&filhos_em_execucao, NULL) != 0){
+        printf("\e[31m[ ERROR ]\e[0m condition variable filhos_em_execucao init failed\n");
+        exit(EXIT_FAILURE);
+  }
+
+
 	/*Criaçao da thread*/
 	pthread_t tid;
 	if(pthread_create (&tid, 0,tarefa_monitora, NULL) == 0)	{
@@ -203,11 +195,9 @@ int main(int argc, char *argv[]){
 
 
 	printf("\e[33m[ INFO ]\e[0m Limite de processos filhos: %d\n", MAXPAR);
+	printf("\e[33m[ INFO ]\e[0m A espera de filhos\n");
 	// loop infinito de execucao da par-shell
-	if(__DEBUG__) {
-		printf("\e[36m[ DEBUG ]\e[0m Pronto para receber comandos.\n");
-	}
-	while(!_exit_ctrl) {
+	while(!_exit_ctrl){
 		// le os argumentos atraves da funcao fornecida
 		readLineArguments(argVector, VECTOR_SIZE);
 
@@ -216,19 +206,35 @@ int main(int argc, char *argv[]){
 			continue;
 		}
 
-		if(strcmp(argVector[0], EXIT_COMMAND) == 0){
+		if(strcmp(argVector[0], "exit") == 0){
 			_exit_ctrl = 1;
+			//sem_post(&filhos_em_execucao);
+			pthread_mutex_lock(&children_mutex);
+			nrActualProcessosFilho++;
+			pthread_cond_signal(&filhos_em_execucao);
+			pthread_mutex_unlock(&children_mutex);
 
-			/* POST novo comando
-			writtenCommands++*/
-			sem_post(&comandos_escritos);
 		}else{
 
-			/* Esperar para que a quota de numero de processos filhos nao seja ultrapassada
-			Decrementar a var
-			slotsAvaiable--
-			*/
-			sem_wait(&slots_processos_disponiveis);
+			/* Esperar para que a quota de numero de processos filhos nao seja ultrapassada */
+			//sem_wait(&lim_processos);
+			if(__DEBUG__){
+				printf ("\e[36m[ DEBUG ]\e[0m A espera que nrActualProcessosFilho < MAXPAR\e[0m\n");
+			}
+			pthread_mutex_lock(&lim_processos_lock);
+			while( nrActualProcessosFilho >= MAXPAR) {
+				if(__DEBUG__){
+					printf ("\e[36m[ DEBUG ]\e[0m Nao devia estar aqui...\e[0m\n");
+					printf ("\e[36m[ DEBUG ]\e[0m nrActualProcessosFilho: %d\e[0m\n", nrActualProcessosFilho);
+					printf ("\e[36m[ DEBUG ]\e[0m MAXPAR :%d\e[0m\n" , MAXPAR);
+				}
+				pthread_cond_wait(&lim_processos, &lim_processos_lock);
+			}
+			nrActualProcessosFilho++;
+			pthread_mutex_unlock(&lim_processos_lock);
+			if(__DEBUG__){
+				printf ("\e[36m[ DEBUG ]\e[0m Condicao Verificada\e[0m\n");
+			}
 
 			// Criacao do processo filho
 			int pid = fork();
@@ -240,8 +246,8 @@ int main(int argc, char *argv[]){
 			}else if(pid > 0) {
 				// PROCESSO PAI
 
-				//Introducao de processo na lista
 				pthread_mutex_lock(&lista_mutex);
+				//Introducao de processo na lista
 				insert_new_process(lista_processos, pid, time(NULL));
 				pthread_mutex_unlock(&lista_mutex);
 
@@ -250,9 +256,11 @@ int main(int argc, char *argv[]){
 				pthread_mutex_unlock(&children_mutex);
 
 				/* Assinalar que existe mais um filho em execuçao */
-				/* POST novo comando
-				writtenCommands++ */
-				sem_post(&comandos_escritos);
+				//sem_post(&filhos_em_execucao);
+				pthread_mutex_lock(&children_mutex);
+				pthread_cond_signal(&filhos_em_execucao);
+				pthread_mutex_unlock(&children_mutex);
+
 			}else{
 				// PROCESSO FILHO
 				// substitui a imagem do executavel actual pelo especificado no comando introduzido
@@ -278,22 +286,23 @@ int main(int argc, char *argv[]){
 			}
 		}
 	}
-
 	// quando termina, a thread principal sincroniza-se com a monitora
 	printf("\n\e[33m[ INFO ]\e[0m Joining monitoring thread...\n\n");
-	if(pthread_join(tid, NULL) != 0) {
-		printf("\e[31m[ Error ]\e[0m joining thread.\n");
-		exit(EXIT_FAILURE);
-	}
+	pthread_join(tid, NULL);
 
 	// liberta a memoria alocada
 	pthread_mutex_destroy(&children_mutex);
 	pthread_mutex_destroy(&lista_mutex);
+	pthread_mutex_destroy(&lim_processos_lock);
+	pthread_mutex_destroy(&children_mutex);
 	lst_print(lista_processos);
 	lst_destroy(lista_processos);
 	free(argVector);
-	sem_destroy(&comandos_escritos);
-	sem_destroy(&slots_processos_disponiveis);
+	/*sem_destroy(&filhos_em_execucao);
+	sem_destroy(&lim_processos);*/
+	pthread_cond_destroy(&filhos_em_execucao);
+	pthread_cond_destroy(&lim_processos);
+	fclose(log);
 
 	// da a mensagem de fim do programa
 	printf("\e[33m[ INFO ]\e[0m Par-shell terminated\n");
