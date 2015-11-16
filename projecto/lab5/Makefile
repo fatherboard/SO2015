@@ -23,5 +23,6 @@ gdb: par-shell
 	gdb par-shell
 
 clean:
-	rm -f *.o *.c~ *.h~ Makefile~ par-shell fib teste seg_fault fail time_test sleeper log.txt 
+	rm -f *.o *.c~ *.h~ Makefile~ par-shell fib teste seg_fault fail time_test sleeper log.txt  par-shell-out-*.txt
+ 
 
