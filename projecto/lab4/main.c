@@ -12,7 +12,7 @@
 #define EXIT_COMMAND "exit"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
-#define MAXPAR 1
+#define MAXPAR 4
 #define __DEBUG__ 0
 
 
