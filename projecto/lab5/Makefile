@@ -1,7 +1,10 @@
-all: fib par-shell fail sleeper seg_fault teste
+all: fib par-shell fail sleeper seg_fault teste terminal
 
 par-shell: list.c main.c commandlinereader.c
 	gcc main.c list.c commandlinereader.c  -g -lpthread -Wall -o par-shell
+
+terminal: par-shell-terminal.c
+	gcc par-shell-terminal.c -o par-shell-terminal
 
 fib: fibonacci.c commandlinereader.c
 	gcc fibonacci.c commandlinereader.c -g -Wall -o fib
@@ -23,6 +26,5 @@ gdb: par-shell
 	gdb par-shell
 
 clean:
-	rm -f *.o *.c~ *.h~ Makefile~ par-shell fib teste seg_fault fail time_test sleeper log.txt  par-shell-out-*.txt
- 
+	rm -f *.o *.c~ *.h~ Makefile~ par-shell fib teste seg_fault fail time_test sleeper log.txt par-shell-out-*.txt par-shell-terminal par-shell-in
 

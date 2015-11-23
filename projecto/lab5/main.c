@@ -4,8 +4,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <pthread.h>
 #include <semaphore.h>
+#include <signal.h>
 #include "commandlinereader.h"
 #include "list.h"
 
@@ -41,6 +43,15 @@ int writtenCommands = 0;
 int slotsAvaiable = MAXPAR;
 static FILE *log;
 int iteration_number = 0, total_exec_time = 0;
+
+void ctrlCHandler(int derp){
+  
+  system("rm -rf par-shell-in");
+  printf("Removed par-shell-in\n");
+  
+  exit(0);
+  
+}
 
 void *tarefa_monitora(){
 	if(__DEBUG__){
@@ -123,7 +134,8 @@ int main(int argc, char *argv[]){
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
 	lista_processos = lst_new();
 
-
+	signal(SIGINT, ctrlCHandler);
+	
 	/* Abrir FIcheiro */
 	log = fopen("log.txt","a+");
 	if(log == NULL){
@@ -187,6 +199,14 @@ int main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 
+	/* criar fifo */
+	
+	dup(stdin);
+	
+	if(mkfifo("par-shell-in", S_IRUSR | S_IWOTH) != 0){
+	    perror("\e[31m[ ERROR ]\e[0m Could not create FIFO");
+	    exit(EXIT_FAILURE);
+	}
 
 	printf("\e[33m[ INFO  ]\e[0m Limite de processos filhos: %d\n", MAXPAR);
 	// loop infinito de execucao da par-shell
@@ -211,7 +231,6 @@ int main(int argc, char *argv[]){
 			writtenCommands++;
 			pthread_cond_signal(&comandos_escritos);
 			pthread_mutex_unlock(&comandos_escritos_mutex);
-		}
 		
 		}else{
 
