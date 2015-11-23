@@ -24,7 +24,7 @@ int main(int argc, char *argv[]){
       exit(EXIT_FAILURE);
   }
   
-  int pipe_fd = open(argv[1], O_APPEND);
+  int pipe_fd = open(argv[1], O_WRONLY);
   
   if(pipe_fd == -1){
       printf("Error opening pipe\n");
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]){
   }
   
   char output[1024];
-  sprintf(output,  "new terminal: %d", getpid());
+  sprintf(output,  "new_terminal %d\0", getpid());
   
   write(pipe_fd, output, strlen(output));
   
