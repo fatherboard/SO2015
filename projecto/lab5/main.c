@@ -263,7 +263,7 @@ int main(int argc, char *argv[]){
 					printf("\e[36m[ DEBUG ]\e[0m Process %d has just started.\n\e[36m[ DEBUG ]\e[0m Executing: %s\n", getpid(), argVector[0] );
 				// PROCESSO FILHO
 				// Creating name
-				char str[80];
+				char str[25];
 				char snum[8];
 				strcpy(str, "par-shell-out-");
 				sprintf(snum, "%d", getpid());
@@ -285,18 +285,17 @@ int main(int argc, char *argv[]){
 
 
 				// substitui a imagem do executavel actual pelo especificado no comando introduzido
-				/*FIXME it is being written in the output file*/
 
 				if(execv(argVector[0], argVector)){
-					if(__DEBUG__){
+					/*if(__DEBUG__){
 						printf("\e[36m[ DEBUG ]\e[0m O comando nao existe na directoria actual.\e[0m\n");
-					}
+					}*/
 				}
 				// o processo continua se nao tiver sido possivel fazer a substituicao do executavel na directoria actual
 				if(execvp(argVector[0], argVector)){
-					if(__DEBUG__){
+					/*if(__DEBUG__){
 						printf("\e[36m[ DEBUG ]\e[0m O comando nao existe em lado nenhum.\e[0m\n");
-					}
+					}*/
 
 					// caso nao tenha sido possivel fazer a substituicao do executavel do processo,
 					// escreve no stderr a razao e termina com status de falha
