@@ -4,7 +4,7 @@ par-shell: list.c main.c commandlinereader.c
 	gcc main.c list.c commandlinereader.c  -g -lpthread -Wall -o par-shell
 
 terminal: par-shell-terminal.c
-	gcc par-shell-terminal.c -o par-shell-terminal
+	gcc par-shell-terminal.c -g -o par-shell-terminal
 
 fib: fibonacci.c commandlinereader.c
 	gcc fibonacci.c commandlinereader.c -g -Wall -o fib

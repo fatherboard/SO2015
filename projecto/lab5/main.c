@@ -202,12 +202,20 @@ int main(int argc, char *argv[]){
 	}
 
 	/* criar fifo */
-
-	dup(0);
-
-	if(mkfifo("par-shell-in", S_IRUSR | S_IWOTH) != 0){
+	if(mkfifo("par-shell-in", S_IRUSR | S_IWUSR) != 0){
 	    perror("\e[31m[ ERROR ]\e[0m Could not create FIFO");
 	    exit(EXIT_FAILURE);
+	}
+
+	int fifo_fd = open("par-shell-in", O_RDONLY);
+	if(fifo_fd < 0){
+	    perror("\e[31m[ ERROR ]\e[0m Could not open FIFO");
+	    exit(EXIT_FAILURE);
+	}
+
+	if(dup2(fifo_fd,0) < 0){
+		perror("\e[31m[ ERROR ]\e[0m Failed to redirect input\n");
+		exit(EXIT_FAILURE);
 	}
 
 	printf("\e[33m[ INFO  ]\e[0m Limite de processos filhos: %d\n", MAXPAR);
@@ -293,11 +301,11 @@ int main(int argc, char *argv[]){
 				int fd = open(str, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
 				if (fd < 0){
 					perror("\e[31m[ ERROR ]\e[0m Failed to open output file\n");
-	        exit(EXIT_FAILURE);
+					exit(EXIT_FAILURE);
 				}
 				if(dup2(fd,1) < 0){
 					perror("\e[31m[ ERROR ]\e[0m Failed to redirect output\n");
-	        exit(EXIT_FAILURE);
+					exit(EXIT_FAILURE);
 				}
 				//close(stdio);
 
