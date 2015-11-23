@@ -47,12 +47,12 @@ static FILE *log;
 int iteration_number = 0, total_exec_time = 0;
 
 void ctrlCHandler(int derp){
-  
+
   system("rm -rf par-shell-in");
   printf("Removed par-shell-in\n");
-  
+
   exit(0);
-  
+
 }
 
 void *tarefa_monitora(){
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]){
 	lista_processos = lst_new();
 
 	signal(SIGINT, ctrlCHandler);
-	
+
 	/* Abrir FIcheiro */
 	log = fopen("log.txt","a+");
 	if(log == NULL){
@@ -202,9 +202,9 @@ int main(int argc, char *argv[]){
 	}
 
 	/* criar fifo */
-	
-	dup(stdin);
-	
+
+	dup(0);
+
 	if(mkfifo("par-shell-in", S_IRUSR | S_IWOTH) != 0){
 	    perror("\e[31m[ ERROR ]\e[0m Could not create FIFO");
 	    exit(EXIT_FAILURE);
@@ -277,9 +277,9 @@ int main(int argc, char *argv[]){
 				pthread_cond_signal(&comandos_escritos);
 				pthread_mutex_unlock(&comandos_escritos_mutex);
 			}else{
+				// PROCESSO FILHO
 				if(__DEBUG__)
 					printf("\e[36m[ DEBUG ]\e[0m Process %d has just started.\n\e[36m[ DEBUG ]\e[0m Executing: %s\n", getpid(), argVector[0] );
-				// PROCESSO FILHO
 				// Creating name
 				char str[25];
 				char snum[8];
