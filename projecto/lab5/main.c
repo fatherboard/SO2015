@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <pthread.h>
@@ -231,7 +233,6 @@ int main(int argc, char *argv[]){
 			writtenCommands++;
 			pthread_cond_signal(&comandos_escritos);
 			pthread_mutex_unlock(&comandos_escritos_mutex);
-		
 		}else{
 
 			//Antigo sem_wait(&slots_processos_disponiveis);
@@ -276,21 +277,43 @@ int main(int argc, char *argv[]){
 				pthread_cond_signal(&comandos_escritos);
 				pthread_mutex_unlock(&comandos_escritos_mutex);
 			}else{
-				// PROCESSO FILHO
-				// substitui a imagem do executavel actual pelo especificado no comando introduzido
 				if(__DEBUG__)
 					printf("\e[36m[ DEBUG ]\e[0m Process %d has just started.\n\e[36m[ DEBUG ]\e[0m Executing: %s\n", getpid(), argVector[0] );
+				// PROCESSO FILHO
+				// Creating name
+				char str[25];
+				char snum[8];
+				strcpy(str, "par-shell-out-");
+				sprintf(snum, "%d", getpid());
+				strcat(str, snum);
+				strcat(str, ".txt");
+				if(__DEBUG__){
+					printf("\e[36m[ DEBUG ]\e[0m ficheiro onde vai escrever: %s\e[0m\n", str);
+				}
+				int fd = open(str, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+				if (fd < 0){
+					perror("\e[31m[ ERROR ]\e[0m Failed to open output file\n");
+	        exit(EXIT_FAILURE);
+				}
+				if(dup2(fd,1) < 0){
+					perror("\e[31m[ ERROR ]\e[0m Failed to redirect output\n");
+	        exit(EXIT_FAILURE);
+				}
+				//close(stdio);
+
+
+				// substitui a imagem do executavel actual pelo especificado no comando introduzido
 
 				if(execv(argVector[0], argVector)){
-					if(__DEBUG__){
+					/*if(__DEBUG__){
 						printf("\e[36m[ DEBUG ]\e[0m O comando nao existe na directoria actual.\e[0m\n");
-					}
+					}*/
 				}
 				// o processo continua se nao tiver sido possivel fazer a substituicao do executavel na directoria actual
 				if(execvp(argVector[0], argVector)){
-					if(__DEBUG__){
+					/*if(__DEBUG__){
 						printf("\e[36m[ DEBUG ]\e[0m O comando nao existe em lado nenhum.\e[0m\n");
-					}
+					}*/
 
 					// caso nao tenha sido possivel fazer a substituicao do executavel do processo,
 					// escreve no stderr a razao e termina com status de falha
