@@ -19,7 +19,8 @@
 #define MAXPAR 4
 #define __DEBUG__ 0
 
-
+/* Ver ficheiro README.md para obter a sintaxe dos comandos
+   de comunicacao entre a par-shell e os terminais 	*/
 
 /* variaveis de sincronizaçao */
 
@@ -134,8 +135,9 @@ int main(int argc, char *argv[]){
 	// com o numero maximo de argumentos permitidos mais um, que corresponde ao nome do
 	// proprio comando
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
+	// a lista_terminais mantem registo dos par-shell-terminal que estao com contacto com esta par-shell
+	list_t *lista_terminais = lst_new();
 	lista_processos = lst_new();
-
 	signal(SIGINT, ctrlCHandler);
 
 	/* Abrir FIcheiro */
@@ -241,8 +243,12 @@ int main(int argc, char *argv[]){
 			writtenCommands++;
 			pthread_cond_signal(&comandos_escritos);
 			pthread_mutex_unlock(&comandos_escritos_mutex);
+		}else if(strcmp(argVector[0], "REG") == 0){
+			// uma nova par-shell-terminal vai registar-se
+			int pstpid = atoi(argVector[1]);
+			insert_new_process(lista_terminais, pstpid, time(NULL));
+			printf("\e[33m[ INFO ]\e[0m Novo par-shell-terminal registado (PID %d)\n", pstpid);
 		}else{
-
 			//Antigo sem_wait(&slots_processos_disponiveis);
 			/* Esperar ate que a quota de numero de processos filhos nao seja ultrapassada */
 			pthread_mutex_lock(&slots_processos_disponiveis_mutex);

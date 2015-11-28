@@ -18,25 +18,40 @@
 #define MAXPAR 4
 #define __DEBUG__ 0
 
+int _exit_ctrl = 0;
+
 int main(int argc, char *argv[]){
+	char **argVector;
 
-  if(argc < 2){
-      printf("Not enough arguments\n"),
-      exit(EXIT_FAILURE);
-  }
-  int pipe_fd = open(argv[1], O_WRONLY);
+	if(argc < 2){
+			printf("Not enough arguments\n"),
+			exit(EXIT_FAILURE);
+	}
+	int pipe_fd = open(argv[1], O_WRONLY);
 
-  if(pipe_fd == -1){
-      perror("Error opening pipe\n");
-      exit(EXIT_FAILURE);
-  }
+	if(pipe_fd == -1){
+			perror("Error opening pipe\n");
+			exit(EXIT_FAILURE);
+	}
 
-  char output[1024];
-  sprintf(output,  "new_terminal %d\0", getpid());
-  write(pipe_fd, output, strlen(output));
+	char output[1024];
+	sprintf(output,	"REG %d", getpid());
+	write(pipe_fd, output, strlen(output));
+	
+	while(!_exit_ctrl) {
+		readLineArguments(argVector, VECTOR_SIZE);
 
-  printf("Enviou\n");
+		if(argVector[0] == NULL){
+			continue;
+		}
 
-  close(pipe_fd);
+		// caso o utilizador tenha introduzido o comando stats
+		if(strcmp(argVector[0], "stats") == 0){
+			
+		}
+		
+	}
+
+	close(pipe_fd);
 
 }
