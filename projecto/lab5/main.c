@@ -56,34 +56,40 @@ int iteration_number = 0, total_exec_time = 0;
 
 void terminate_terminals(){
 
-  lst_iitem_t *item;
+  lst_iitem_t *item, *prev;
   item = lista_terminais->first;
+  //prev = lista_terminais->first;
 
   while(item != NULL){
+	 prev = item;
+	 if(__DEBUG__){
+  		printf("\n\n\e[36m[ DEBUG ]\e[0m Killing %d \n\n\n",item->pid);		 
+	 }
      kill(item->pid, SIGINT);
      item = item->next;
+	 free(prev);
   }
 }
 
 void ctrlCHandler(int derp){
   printf("\e[33m[ INFO  ]\e[0m SHUTDOWN initiated! \n");
 
-  terminate_terminals();
+
   deleteFifo(MAIN_PIPE);
 
-  _exit_ctrl = 1;
 
+  // End main par shell orderly
+  _exit_ctrl = 1;
   pthread_mutex_lock(&comandos_escritos_mutex);
   writtenCommands++;
   pthread_cond_signal(&comandos_escritos);
   pthread_mutex_unlock(&comandos_escritos_mutex);
-
 }
 
 void *tarefa_monitora(){
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m Estamos na tarefa_monitora %d\n", (int) pthread_self() );
-  }
+  	}
 
 	int status,dif;
 
@@ -239,8 +245,8 @@ int main(int argc, char *argv[]){
 		printf("\e[36m[ DEBUG ]\e[0m pthread init complete\n");
 	}
 
-	deleteFifo(MAIN_PIPE);
 	create_fifo_read(MAIN_PIPE);
+
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m fifo creation complete\n");
 	}
@@ -266,8 +272,9 @@ int main(int argc, char *argv[]){
 		// le os argumentos atraves da funcao fornecida
 		if(readLineArguments(argVector, VECTOR_SIZE) <= 0){
 			/*if(__DEBUG__) {
-			printf("\e[36m[ DEBUG ]\e[0m nenhum comando foi lido\n");
 			}*/
+
+			printf("\e[36m[ DEBUG ]\e[0m nenhum comando foi lido\n");
 			continue;
 		}
 
@@ -410,7 +417,7 @@ int main(int argc, char *argv[]){
 		printf("\e[31m[ Error ]\e[0m joining thread.\n");
 		exit(EXIT_FAILURE);
 	}
-
+  	terminate_terminals();
 	// liberta a memoria alocada
 	pthread_mutex_destroy(&children_mutex);
 	pthread_mutex_destroy(&lista_mutex);
@@ -422,7 +429,6 @@ int main(int argc, char *argv[]){
 	pthread_cond_destroy(&comandos_escritos);
 	pthread_cond_destroy(&slots_processos_disponiveis);
 	fclose(log);
-  deleteFifo(MAIN_PIPE);
 	// da a mensagem de fim do programa
 	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
 	printf("\e[33m[ INFO  ]\e[0m exiting..\n");

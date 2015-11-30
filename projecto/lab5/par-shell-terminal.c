@@ -30,8 +30,6 @@ void ctrlCHandler(int derp){
 	printf("\e[33m[ INFO  ]\e[0m I received SIGINT (by another process or by ctrl+c)\n");
 
 	deleteFifo(my_fifo_name);
-	/*sprintf(fifo_name, "rm -rf %s", fifo_name);
-	system(fifo_name);*/
 
 	exit(0);
 }
@@ -41,7 +39,7 @@ int main(int argc, char *argv[]){
 	char output[1024], input[1024], aux[1024];
 	signal(SIGINT, ctrlCHandler);
 	if(argc < 2){
-		perror("\e[31m[ ERROR ]\e[0m Not enough arguments\n");
+		fprintf(stderr,"\e[31m[ ERROR ]\e[0m Not enough arguments\n");
 		exit(EXIT_FAILURE);
 	}
 	/* Abertura do pipe da main par shell*/
@@ -66,6 +64,7 @@ int main(int argc, char *argv[]){
 		if(strcmp(input, "stats\n") == 0){
 			sprintf(aux, "stats %d\n", getpid());
 			create_fifo_read(my_fifo_name);
+
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m fifo creation complete\n");
 			}
@@ -84,7 +83,7 @@ int main(int argc, char *argv[]){
 			sscanf(input,"%d %d", &numChildren ,&total_exec_time);
 			printf("\e[33m[ INFO ]\e[0m Num of Children currrently running: %d\n", numChildren);
 			printf("\e[33m[ INFO ]\e[0m Total execution time: %d\n", total_exec_time);
-			
+
 			close(my_fifo_fd);
 			deleteFifo(my_fifo_name);
 
