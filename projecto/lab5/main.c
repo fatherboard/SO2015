@@ -14,6 +14,7 @@
 #include "list.h"
 
 #define EXIT_COMMAND "exit"
+#define EXIT_GLOBAL "exit-global"
 #define NEW_TERMINAL_COMMAND "REG"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
@@ -41,12 +42,27 @@ pthread_mutex_t lista_mutex;
 // variaveis globais a serem partilhadas pelas threads
 /* Comandos tipo fib (validos) */
 list_t *lista_processos;
+// a lista_terminais mantem registo dos par-shell-terminal que estao com contacto com esta par-shell
+list_t *lista_terminais;
 int numChildren = 0;
 int _exit_ctrl = 0;
 int writtenCommands = 0;
 int slotsAvaiable = MAXPAR;
 static FILE *log;
 int iteration_number = 0, total_exec_time = 0;
+
+void terminate_terminals(){
+  
+  lst_iitem_t *item;
+  
+  item = lista_terminais->first;
+  
+  while(item != NULL){
+     kill(item->pid, SIGKILL);
+     item = item->next;
+  }
+  
+}
 
 void deleteFifo(){
   system("rm -rf par-shell-in");
@@ -56,13 +72,12 @@ void deleteFifo(){
 
 void ctrlCHandler(int derp){
 
+  terminate_terminals();
   deleteFifo();
 
 
   exit(0);
 }
-
-
 
 void *tarefa_monitora(){
 	if(__DEBUG__){
@@ -143,8 +158,7 @@ int main(int argc, char *argv[]){
 	// com o numero maximo de argumentos permitidos mais um, que corresponde ao nome do
 	// proprio comando
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
-	// a lista_terminais mantem registo dos par-shell-terminal que estao com contacto com esta par-shell
-	list_t *lista_terminais = lst_new();
+	
 	lista_processos = lst_new();
 	signal(SIGINT, ctrlCHandler);
 
@@ -154,6 +168,8 @@ int main(int argc, char *argv[]){
 	  printf("\e[31m[ ERROR ]\e[0m could not open log.txt\n");
 	  exit(EXIT_FAILURE);
 	}
+	
+	lista_terminais = lst_new();
 
 	/*Ler dados do ficheiro*/
 	char str_dummy[50], line[1024];
@@ -273,8 +289,13 @@ int main(int argc, char *argv[]){
       }
       continue;
     }
-		if(strcmp(argVector[0], EXIT_COMMAND) == 0){
+		if(strcmp(argVector[0], EXIT_COMMAND) == 0 || strcmp(argVector[0], EXIT_GLOBAL) == 0){
 			_exit_ctrl = 1;
+			
+			if(strcmp(argVector[0], EXIT_GLOBAL) == 0){
+			  terminate_terminals();
+			  printf("\e[33m[ INFO ]\e[0m exit-global received\n");
+			}
 
 			//Antigo sem_post(&comandos_escritos);
 			/* Avisar que um novo comando foi lancado */
