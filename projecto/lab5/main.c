@@ -57,18 +57,13 @@ int iteration_number = 0, total_exec_time = 0;
 void terminate_terminals(){
 
   lst_iitem_t *item;
-
   item = lista_terminais->first;
 
   while(item != NULL){
      kill(item->pid, SIGINT);
      item = item->next;
   }
-
 }
-
-
-
 
 void ctrlCHandler(int derp){
   printf("\e[33m[ INFO  ]\e[0m shutdown initiated\n");
@@ -166,6 +161,7 @@ int main(int argc, char *argv[]){
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
 
 	lista_processos = lst_new();
+	lista_terminais = lst_new();
 	signal(SIGINT, ctrlCHandler);
 
 	/* Abrir FIcheiro */
@@ -175,7 +171,6 @@ int main(int argc, char *argv[]){
 	  exit(EXIT_FAILURE);
 	}
 
-	lista_terminais = lst_new();
 
 	/*Ler dados do ficheiro*/
 	char str_dummy[50], line[1024];
@@ -244,10 +239,14 @@ int main(int argc, char *argv[]){
 		printf("\e[36m[ DEBUG ]\e[0m pthread init complete\n");
 	}
 
-  unlink(MAIN_PIPE);
-	int fifo_fd = create_fifo_read(MAIN_PIPE);
+	deleteFifo(MAIN_PIPE);
+	create_fifo_read(MAIN_PIPE);
 	if(__DEBUG__){
-		printf("\e[36m[ DEBUG ]\e[0m fifo creation and opening complete\n");
+		printf("\e[36m[ DEBUG ]\e[0m fifo creation complete\n");
+	}
+	int fifo_fd = open_pipe_read(MAIN_PIPE);
+	if(__DEBUG__){
+		printf("\e[36m[ DEBUG ]\e[0m fifo opening complete\n");
 	}
 
 	if(dup2(fifo_fd,0) < 0){
@@ -271,7 +270,7 @@ int main(int argc, char *argv[]){
 			}*/
 			continue;
 		}
-		
+
 		// caso nao tenha sido introduzido um comando, a par-shell prossegue a sua execucao
 		if(argVector[0] == NULL){
 			continue;

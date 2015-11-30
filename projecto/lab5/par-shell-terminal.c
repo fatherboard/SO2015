@@ -21,14 +21,15 @@
 #define MAXPAR 4
 #define __DEBUG__ 1
 
-int _exit_ctrl = 0, shell_fifo, my_fifo;
-char fifo_name[512];
+int _exit_ctrl = 0;
+int shell_fifo, my_fifo_fd;
+char my_fifo_name[512];
 
 void ctrlCHandler(int derp){
 
-	printf("\e[33m[ INFO ]\e[0m I received SIGINT (by another process or by ctrl+c)\n");
+	printf("\e[33m[ INFO  ]\e[0m I received SIGINT (by another process or by ctrl+c)\n");
 
-	deleteFifo(fifo_name);
+	deleteFifo(my_fifo_name);
 	/*sprintf(fifo_name, "rm -rf %s", fifo_name);
 	system(fifo_name);*/
 
@@ -38,45 +39,49 @@ void ctrlCHandler(int derp){
 int main(int argc, char *argv[]){
 
 	char output[1024], input[1024], aux[1024];
-
 	signal(SIGINT, ctrlCHandler);
-
 	if(argc < 2){
 		perror("\e[31m[ ERROR ]\e[0m Not enough arguments\n");
 		exit(EXIT_FAILURE);
 	}
-
-	sprintf(fifo_name, "par-shell-terminal-in-%d", getpid());
+	/* Abertura do pipe da main par shell*/
 	shell_fifo = open_pipe_write(argv[1]);
 
-	sprintf(output,	"%s %d\n",NEW_TERMINAL_COMMAND, getpid());
+	/* Criacao do nome do pipe onde leio stats*/
+	sprintf(my_fifo_name, "par-shell-terminal-in-%d", getpid());
 
+	/* Criacao da string que avisa a main par shell que existe um novo terminal*/
+	sprintf(output,	"%s %d\n",NEW_TERMINAL_COMMAND, getpid());
+	/* Aviso a main par shell que existe um novo terminal */
+	write(shell_fifo, output, strlen(output));
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m New msg sent: \'%s", output );
 	}
-	write(shell_fifo, output, strlen(output));
 
+	/* Ciclo de leitura do par-shell-terminal */
 	while(!_exit_ctrl) {
 		fgets(input, 1024, stdin);
 
 		// caso o utilizador tenha introduzido o comando stats
 		if(strcmp(input, "stats\n") == 0){
 			sprintf(aux, "stats %d\n", getpid());
+			create_fifo_read(my_fifo_name);
+			if(__DEBUG__){
+				printf("\e[36m[ DEBUG ]\e[0m fifo creation complete");
+			}
+
 			write(shell_fifo, aux, strlen(aux));
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m msg sent: \'%s", aux );
 			}
 
-			my_fifo = create_fifo_read(fifo_name);
-			read(my_fifo, input, 1024);
-
-			close(my_fifo);
+			my_fifo_fd = open_pipe_read(my_fifo_name);
+			read(my_fifo_fd, input, 1024);
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m msg received: %s\n", input);
 			}
-
-			deleteFifo(fifo_name);
-
+			close(my_fifo_fd);
+			deleteFifo(my_fifo_name);
 
 		}else if(strcmp(input, EXIT_COMMAND) == 0){
 			sprintf(aux,	"%s %d\n", CLOSE_TERMINAL_COMMAND, getpid());
@@ -97,7 +102,7 @@ int main(int argc, char *argv[]){
 		}
 
 	}
-	printf("\e[33m[ INFO ]\e[0m Exiting \n");
+	printf("\e[33m[ INFO  ]\e[0m Exiting \n");
 
 	exit(EXIT_SUCCESS);
 }

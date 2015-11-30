@@ -7,18 +7,11 @@ void deleteFifo(char * name){
     //exit(EXIT_FAILURE);
   }
   else{
-    printf("\e[33m[ INFO ]\e[0m Removed pipe %s\n", name);
+    printf("\e[33m[ INFO  ]\e[0m Removed pipe %s\n", name);
   }
-//  system("rm -rf par-shell-in");
-//  system("ls -l ");
-/*  system("echo -e -n '\e[31m'");
-  system("ls -l  | grep par-shell-in");
-  system("echo -e -n '\e[0m'");
-  printf("\e[35m[ FIXME ]\e[0m Remove SYSTEM CALLS\n");*/
-
 }
 
-int create_fifo_read(char *name){
+void create_fifo_read(char *name){
 
 	deleteFifo(name);
 
@@ -27,16 +20,10 @@ int create_fifo_read(char *name){
 	    exit(EXIT_FAILURE);
 	}
 
-/*
-	fifo_fd = open(name, O_RDONLY);
-	if(fifo_fd < 0){
-	    perror("\e[31m[ ERROR ]\e[0m Could not open FIFO");
-	    exit(EXIT_FAILURE);
-	}*/
-	return open_pipe_read(name);
+	//return open_pipe_read(name);
 }
 
-int create_fifo_write(char *name){
+void create_fifo_write(char *name){
 
 	deleteFifo(name);
 
@@ -44,13 +31,7 @@ int create_fifo_write(char *name){
 	    perror("\e[31m[ ERROR ]\e[0m Could not create FIFO");
 	    exit(EXIT_FAILURE);
 	}
-/*
-	fifo_fd = open(name, O_WRONLY);
-	if(fifo_fd < 0){
-	    perror("\e[31m[ ERROR ]\e[0m Could not open FIFO");
-	    exit(EXIT_FAILURE);
-	}*/
-	return open_pipe_write(name);
+	//return open_pipe_write(name);
 }
 
 int open_pipe_write(char *pipe_name){
