@@ -14,6 +14,7 @@
 #include "list.h"
 
 #define EXIT_COMMAND "exit"
+#define NEW_TERMINAL_COMMAND "REG"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
@@ -197,7 +198,7 @@ int main(int argc, char *argv[]){
 				exit(EXIT_FAILURE);
 	}
   if(__DEBUG__){
-    printf("\e[36m[ DEBUG ]\e[0m pthread_cond init complete\n");
+    printf("\e[33m[ DEBUG ]\e[0m pthread_cond init complete\n");
   }
 
 	/*Criaçao da thread*/
@@ -252,7 +253,6 @@ int main(int argc, char *argv[]){
       /*if(__DEBUG__) {
         printf("\e[36m[ DEBUG ]\e[0m nenhum comando foi lido\n");
       }*/
-		  // caso nao tenha sido introduzido um comando, a par-shell prossegue a sua execucao
       continue;
     }
 		// caso nao tenha sido introduzido um comando, a par-shell prossegue a sua execucao
@@ -260,6 +260,12 @@ int main(int argc, char *argv[]){
 			continue;
 		}
 
+		if(strcmp(argVector[0], NEW_TERMINAL_COMMAND) == 0){
+      if(__DEBUG__) {
+        printf("\e[36m[ DEBUG ]\e[0m New Terminal Added\n");
+      }
+      continue;
+    }
 		if(strcmp(argVector[0], EXIT_COMMAND) == 0){
 			_exit_ctrl = 1;
 
