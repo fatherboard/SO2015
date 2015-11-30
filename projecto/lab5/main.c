@@ -17,6 +17,7 @@
 #define EXIT_COMMAND "exit"
 #define EXIT_GLOBAL "exit-global"
 #define NEW_TERMINAL_COMMAND "NEW_TERMINAL"
+#define MAIN_PIPE "par-shell-in"
 #define CLOSE_TERMINAL_COMMAND "CLOSE_TERMINAL"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
@@ -60,30 +61,19 @@ void terminate_terminals(){
   item = lista_terminais->first;
 
   while(item != NULL){
-     kill(item->pid, SIGINT
-	);
+     kill(item->pid, SIGINT);
      item = item->next;
   }
 
 }
 
-void deleteFifo(){
-  unlink("./par-shell-in");
-//  system("rm -rf par-shell-in");
-//  system("ls -l ");
-  system("echo -e -n '\e[31m'");
-  system("ls -l  | grep par-shell-in");
-  system("echo -e -n '\e[0m'");
-  printf("\e[35m[ FIXME ]\e[0m Remove SYSTEM CALLS\n");
 
-  printf("\e[33m[ INFO ]\e[0m Removed par-shell-in\n");
-}
 
 
 void ctrlCHandler(int derp){
 
   terminate_terminals();
-  deleteFifo();
+  deleteFifo(MAIN_PIPE);
 
 
   exit(0);
@@ -248,7 +238,8 @@ int main(int argc, char *argv[]){
 		printf("\e[36m[ DEBUG ]\e[0m pthread init complete\n");
 	}
 
-	int fifo_fd = create_fifo_read("par-shell-in");
+  unlink(MAIN_PIPE);
+	int fifo_fd = create_fifo_read(MAIN_PIPE);
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m fifo creation and opening complete\n");
 	}
@@ -432,7 +423,7 @@ int main(int argc, char *argv[]){
 	pthread_cond_destroy(&comandos_escritos);
 	pthread_cond_destroy(&slots_processos_disponiveis);
 	fclose(log);
-  deleteFifo();
+  deleteFifo(MAIN_PIPE);
 	// da a mensagem de fim do programa
 	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
 	printf("\e[33m[ INFO  ]\e[0m exiting..\n");
