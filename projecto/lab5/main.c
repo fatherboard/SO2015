@@ -271,39 +271,14 @@ int main(int argc, char *argv[]){
 			}*/
 			continue;
 		}
+		
 		// caso nao tenha sido introduzido um comando, a par-shell prossegue a sua execucao
 		if(argVector[0] == NULL){
 			continue;
 		}
 
-		if(strcmp(argVector[0], NEW_TERMINAL_COMMAND) == 0){
-			if(__DEBUG__) {
-				printf("\e[36m[ DEBUG ]\e[0m New Terminal Added\n");
-			}
-			insert_new_process(lista_terminais, atoi(argVector[1]), time(NULL));
-			continue;
-		}
 		if(strcmp(argVector[0], EXIT_COMMAND) == 0 || strcmp(argVector[0], EXIT_GLOBAL) == 0){
-      ctrlCHandler(0);
-      /*FIXME*/
-      //_exit_ctrl = 1;
-      /*
-			if(strcmp(argVector[0], EXIT_GLOBAL) == 0){
-				printf("\e[33m[ INFO ]\e[0m exit-global received\n");
-				terminate_terminals();
-			}
-      /**/
-
-			//Antigo sem_post(&comandos_escritos);
-			/* Avisar que um novo comando foi lancado */
-
-      /*FIXME*/
-      /*pthread_mutex_lock(&comandos_escritos_mutex);
-			writtenCommands++;
-			pthread_cond_signal(&comandos_escritos);
-			pthread_mutex_unlock(&comandos_escritos_mutex);
-      /**/
-
+			ctrlCHandler(0);
 		}else if(strcmp(argVector[0], CLOSE_TERMINAL_COMMAND) == 0){
 			int pstpid = atoi(argVector[1]);
 			if(pstpid == 0){
@@ -312,12 +287,6 @@ int main(int argc, char *argv[]){
 				delete_process(lista_terminais, pstpid);
 				printf("\e[33m[ INFO ]\e[0m par-shell-terminal eliminado (PID %d)\n", pstpid);
 			}
-
-			/*
-			pthread_mutex_lock(&lista_mutex);
-			pthread_mutex_unlock(&lista_mutex);
-			printf("\e[31m[ ERROR ]\e[0m Process %d terminated Abruptly\n", ret );
-			*/
 		}else if(strcmp(argVector[0], NEW_TERMINAL_COMMAND) == 0){
 			// uma nova par-shell-terminal vai registar-se
 			int pstpid = atoi(argVector[1]);
