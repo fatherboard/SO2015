@@ -17,7 +17,7 @@
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
-#define __DEBUG__ 0
+#define __DEBUG__ 1
 
 /* Ver ficheiro README.md para obter a sintaxe dos comandos
    de comunicacao entre a par-shell e os terminais 	*/
@@ -164,7 +164,8 @@ int main(int argc, char *argv[]){
 	  }
 	}
 
-	// Inicializacao dos mutex
+
+  // Inicializacao dos mutex
 	if (pthread_mutex_init(&children_mutex, NULL) != 0){
         printf("\e[31m[ ERROR ]\e[0m children_mutex init failed\n");
         exit(EXIT_FAILURE);
@@ -181,6 +182,10 @@ int main(int argc, char *argv[]){
         printf("\e[31m[ ERROR ]\e[0m comandos_escritos_mutex init failed\n");
         exit(EXIT_FAILURE);
   }
+  if(__DEBUG__){
+    printf("\e[33m[ DEBUG ]\e[0m mutex init complete\n");
+  }
+
 
 	/* Inicializacao das variaveis de condicao*/
 	if(pthread_cond_init(&slots_processos_disponiveis, NULL) != 0){
@@ -191,6 +196,10 @@ int main(int argc, char *argv[]){
 				printf("\e[31m[ ERROR ]\e[0m condition variable comandos_escritos init failed\n");
 				exit(EXIT_FAILURE);
 	}
+  if(__DEBUG__){
+    printf("\e[36m[ DEBUG ]\e[0m pthread_cond init complete\n");
+  }
+
 	/*Criaçao da thread*/
 	pthread_t tid;
 	if(pthread_create (&tid, 0,tarefa_monitora, NULL) == 0)	{
@@ -202,23 +211,35 @@ int main(int argc, char *argv[]){
 		printf("\e[31m[ ERROR ]\e[0m Creating Thread\n");
 		exit(EXIT_FAILURE);
 	}
+  if(__DEBUG__){
+    printf("\e[36m[ DEBUG ]\e[0m pthread init complete\n");
+  }
 
 	/* criar fifo */
 	if(mkfifo("par-shell-in", S_IRUSR | S_IWUSR) != 0){
 	    perror("\e[31m[ ERROR ]\e[0m Could not create FIFO");
 	    exit(EXIT_FAILURE);
 	}
+  if(__DEBUG__){
+    printf("\e[36m[ DEBUG ]\e[0m fifo creation complete\n");
+  }
 
 	int fifo_fd = open("par-shell-in", O_RDONLY);
 	if(fifo_fd < 0){
 	    perror("\e[31m[ ERROR ]\e[0m Could not open FIFO");
 	    exit(EXIT_FAILURE);
 	}
+  if(__DEBUG__){
+    printf("\e[36m[ DEBUG ]\e[0m open fifo complete\n");
+  }
 
 	if(dup2(fifo_fd,0) < 0){
 		perror("\e[31m[ ERROR ]\e[0m Failed to redirect input\n");
 		exit(EXIT_FAILURE);
 	}
+  if(__DEBUG__){
+    printf("\e[36m[ DEBUG ]\e[0m changing inpute chanel complete\n");
+  }
 
 	printf("\e[33m[ INFO  ]\e[0m Limite de processos filhos: %d\n", MAXPAR);
 	// loop infinito de execucao da par-shell
@@ -227,8 +248,13 @@ int main(int argc, char *argv[]){
 	}
 	while(!_exit_ctrl) {
 		// le os argumentos atraves da funcao fornecida
-		readLineArguments(argVector, VECTOR_SIZE);
-
+		if(readLineArguments(argVector, VECTOR_SIZE) <= 0){
+      /*if(__DEBUG__) {
+        printf("\e[36m[ DEBUG ]\e[0m nenhum comando foi lido\n");
+      }*/
+		  // caso nao tenha sido introduzido um comando, a par-shell prossegue a sua execucao
+      continue;
+    }
 		// caso nao tenha sido introduzido um comando, a par-shell prossegue a sua execucao
 		if(argVector[0] == NULL){
 			continue;
