@@ -28,7 +28,7 @@ void ctrlCHandler(int derp){
 
 	printf("\e[33m[ INFO ]\e[0m I received SIGINT (by another process or by ctrl+c)\n");
 
-	deleteFifo(shell_fifo);
+	deleteFifo(fifo_name);
 	sprintf(fifo_name, "rm -rf %s", fifo_name);
 	system(fifo_name);
 
@@ -75,6 +75,8 @@ int main(int argc, char *argv[]){
 			close(my_fifo);
 			
 			printf("DEBUG: %s\n", input);
+			
+			deleteFifo(fifo_name);
 		}else if(strcmp(input, EXIT_COMMAND) == 0){
 			sprintf(aux,	"%s %d\n", CLOSE_TERMINAL_COMMAND, getpid());
 			_exit_ctrl = 1;
