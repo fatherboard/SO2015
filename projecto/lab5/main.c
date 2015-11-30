@@ -66,7 +66,7 @@ void terminate_terminals(){
 }
 
 void ctrlCHandler(int derp){
-  printf("\e[33m[ INFO  ]\e[0m shutdown initiated\n");
+  printf("\e[33m[ INFO  ]\e[0m SHUTDOWN initiated! \n");
 
   terminate_terminals();
   deleteFifo(MAIN_PIPE);
@@ -284,7 +284,7 @@ int main(int argc, char *argv[]){
 				perror("\e[31m[ Error ]\e[0m CLOSE: terminal PID number invalid");
 			}else{
 				delete_process(lista_terminais, pstpid);
-				printf("\e[33m[ INFO ]\e[0m par-shell-terminal eliminado (PID %d)\n", pstpid);
+				printf("\e[33m[ INFO  ]\e[0m par-shell-terminal eliminado (PID %d)\n", pstpid);
 			}
 		}else if(strcmp(argVector[0], NEW_TERMINAL_COMMAND) == 0){
 			// uma nova par-shell-terminal vai registar-se
@@ -294,15 +294,26 @@ int main(int argc, char *argv[]){
 			}
 			else{
 				insert_new_process(lista_terminais, pstpid, time(NULL));
-				printf("\e[33m[ INFO ]\e[0m Novo par-shell-terminal registado (PID %d)\n", pstpid);
+				printf("\e[33m[ INFO  ]\e[0m Novo par-shell-terminal registado (PID %d)\n", pstpid);
 			}
 		}else if(strcmp(argVector[0], "stats") == 0){
 			char pipe_name[512];
+			char message_to_send[512];
 
-			sprintf(pipe_name, "par-shell-terminal-in-%s", argVector[1]);
-			int terminal_fifo = open_pipe_write(pipe_name);
-			write(terminal_fifo, "batata", 7);
-			close(terminal_fifo);
+			int pstpid = atoi(argVector[1]);
+			if(pstpid == 0){
+				perror("\e[31m[ Error ]\e[0m STATS: terminal PID number invalid");
+			}else{
+				sprintf(pipe_name, "par-shell-terminal-in-%s", argVector[1]);
+				int terminal_fifo = open_pipe_write(pipe_name);
+				sprintf(message_to_send, "%d %d\n", numChildren, total_exec_time);
+
+				write(terminal_fifo, message_to_send, strlen(message_to_send));
+				if(__DEBUG__){
+					printf("\e[36m[ DEBUG ]\e[0m msg sent to %s: \'%s", argVector[1], message_to_send );
+				}
+				close(terminal_fifo);
+			}
 		}else{
 			//Antigo sem_wait(&slots_processos_disponiveis);
 			/* Esperar ate que a quota de numero de processos filhos nao seja ultrapassada */

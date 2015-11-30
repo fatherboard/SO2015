@@ -67,7 +67,7 @@ int main(int argc, char *argv[]){
 			sprintf(aux, "stats %d\n", getpid());
 			create_fifo_read(my_fifo_name);
 			if(__DEBUG__){
-				printf("\e[36m[ DEBUG ]\e[0m fifo creation complete");
+				printf("\e[36m[ DEBUG ]\e[0m fifo creation complete\n");
 			}
 
 			write(shell_fifo, aux, strlen(aux));
@@ -80,6 +80,11 @@ int main(int argc, char *argv[]){
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m msg received: %s\n", input);
 			}
+			int total_exec_time,numChildren;
+			sscanf(input,"%d %d", &numChildren ,&total_exec_time);
+			printf("\e[33m[ INFO ]\e[0m Num of Children currrently running: %d\n", numChildren);
+			printf("\e[33m[ INFO ]\e[0m Total execution time: %d\n", total_exec_time);
+			
 			close(my_fifo_fd);
 			deleteFifo(my_fifo_name);
 

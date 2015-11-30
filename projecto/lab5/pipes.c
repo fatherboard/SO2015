@@ -7,7 +7,7 @@ void deleteFifo(char * name){
     //exit(EXIT_FAILURE);
   }
   else{
-    printf("\e[33m[ INFO  ]\e[0m Removed pipe %s\n", name);
+    printf("\e[33m[ INFO  ]\e[0m pipe %s removed with \e[32msucess\e[0m\n", name);
   }
 }
 
