@@ -71,12 +71,17 @@ void terminate_terminals(){
 
 
 void ctrlCHandler(int derp){
+  printf("\e[33m[ INFO  ]\e[0m Received SIGINT signal\n");
+  terminate
 
   terminate_terminals();
   deleteFifo(MAIN_PIPE);
 
+  pthread_mutex_lock(&comandos_escritos_mutex);
+  writtenCommands++;
+  pthread_cond_signal(&comandos_escritos);
+  pthread_mutex_unlock(&comandos_escritos_mutex);
 
-  exit(0);
 }
 
 void *tarefa_monitora(){
@@ -278,19 +283,26 @@ int main(int argc, char *argv[]){
 			continue;
 		}
 		if(strcmp(argVector[0], EXIT_COMMAND) == 0 || strcmp(argVector[0], EXIT_GLOBAL) == 0){
-			_exit_ctrl = 1;
-
+      ctrlCHandler(0);
+      /*FIXME*/
+      _exit_ctrl = 1;
+      /*
 			if(strcmp(argVector[0], EXIT_GLOBAL) == 0){
 				printf("\e[33m[ INFO ]\e[0m exit-global received\n");
 				terminate_terminals();
 			}
+      /**/
 
 			//Antigo sem_post(&comandos_escritos);
 			/* Avisar que um novo comando foi lancado */
-			pthread_mutex_lock(&comandos_escritos_mutex);
+
+      /*FIXME*/
+      pthread_mutex_lock(&comandos_escritos_mutex);
 			writtenCommands++;
 			pthread_cond_signal(&comandos_escritos);
 			pthread_mutex_unlock(&comandos_escritos_mutex);
+      /**/
+
 		}else if(strcmp(argVector[0], CLOSE_TERMINAL_COMMAND) == 0){
       int pstpid = atoi(argVector[1]);
       if(pstpid == 0){
