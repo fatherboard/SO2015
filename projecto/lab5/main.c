@@ -48,14 +48,21 @@ int slotsAvaiable = MAXPAR;
 static FILE *log;
 int iteration_number = 0, total_exec_time = 0;
 
-void ctrlCHandler(int derp){
-
+void deleteFifo(){
   system("rm -rf par-shell-in");
   printf("Removed par-shell-in\n");
+}
+
+
+void ctrlCHandler(int derp){
+
+  deleteFifo();
+
 
   exit(0);
-
 }
+
+
 
 void *tarefa_monitora(){
 	if(__DEBUG__){
@@ -388,6 +395,7 @@ int main(int argc, char *argv[]){
 	pthread_cond_destroy(&comandos_escritos);
 	pthread_cond_destroy(&slots_processos_disponiveis);
 	fclose(log);
+  deleteFifo();
 	// da a mensagem de fim do programa
 	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
 	printf("\e[33m[ INFO  ]\e[0m exiting..\n");

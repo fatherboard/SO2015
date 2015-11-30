@@ -12,7 +12,7 @@
 #include "list.h"
 
 #define EXIT_COMMAND "exit\n"
-#define GLOBAL_EXIT "exit-global"
+#define GLOBAL_EXIT  "exit-global"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
@@ -36,7 +36,7 @@ int open_pipew(char *pipe_name){
 
 int main(int argc, char *argv[]){
 
-	char output[1024], input[1024];
+	char output[1024], input[1024], aux[1024];
 
 	if(argc < 2){
 			printf("Not enough arguments\n"),
@@ -57,8 +57,11 @@ int main(int argc, char *argv[]){
 			write(pipe_fd, input, strlen(input));
 			//close(pipe_fd);
 		}else if(strcmp(input, EXIT_COMMAND) == 0){
+			sprintf(aux,	"%s %d", input, getpid());
+			fprintf(stderr, "vou sair.. %s\n", aux );
+
 			_exit_ctrl = 1;
-			//write(pipe_fd, input, strlen(input));
+			write(pipe_fd, aux, strlen(aux));
 			//close(pipe_fd);
 		}else{
 			//pipe_fd = open_pipew(argv[1]);
