@@ -2,15 +2,20 @@
 #include <unistd.h>
 
 void deleteFifo(char * name){
-  unlink(name);
+  if(unlink(name) == -1){
+    printf("\e[31m[ ERROR ]\e[0m to remove pipe %s\n", name);
+    exit(EXIT_FAILURE);
+  }
+  else{
+    printf("\e[33m[ INFO ]\e[0m Removed pipe %s\n", name);
+  }
 //  system("rm -rf par-shell-in");
 //  system("ls -l ");
-  system("echo -e -n '\e[31m'");
+/*  system("echo -e -n '\e[31m'");
   system("ls -l  | grep par-shell-in");
   system("echo -e -n '\e[0m'");
-  printf("\e[35m[ FIXME ]\e[0m Remove SYSTEM CALLS\n");
+  printf("\e[35m[ FIXME ]\e[0m Remove SYSTEM CALLS\n");*/
 
-  printf("\e[33m[ INFO ]\e[0m Removed par-shell-in\n");
 }
 
 int create_fifo_read(char *name){
