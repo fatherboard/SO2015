@@ -16,6 +16,7 @@
 #define EXIT_COMMAND "exit"
 #define EXIT_GLOBAL "exit-global"
 #define NEW_TERMINAL_COMMAND "NEW_TERMINAL"
+#define CLOSE_TERMINAL_COMMAND "CLOSE_TERMINAL"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
@@ -71,6 +72,7 @@ void deleteFifo(){
   system("echo -e -n '\e[31m'");
   system("ls -l  | grep par-shell-in");
   system("echo -e -n '\e[0m'");
+  printf("\e[35m[ FIXME ]\e[0m Remove SYSTEM CALLS\n");
 
   printf("\e[33m[ INFO ]\e[0m Removed par-shell-in\n");
 }
@@ -213,7 +215,7 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);
   }
   if(__DEBUG__){
-    printf("\e[33m[ DEBUG ]\e[0m mutex init complete\n");
+    printf("\e[36m[ DEBUG ]\e[0m mutex init complete\n");
   }
 
 
@@ -227,7 +229,7 @@ int main(int argc, char *argv[]){
 				exit(EXIT_FAILURE);
 	}
   if(__DEBUG__){
-    printf("\e[33m[ DEBUG ]\e[0m pthread_cond init complete\n");
+    printf("\e[36m[ DEBUG ]\e[0m pthread_cond init complete\n");
   }
 
 	/*Criaçao da thread*/
@@ -309,11 +311,30 @@ int main(int argc, char *argv[]){
 			writtenCommands++;
 			pthread_cond_signal(&comandos_escritos);
 			pthread_mutex_unlock(&comandos_escritos_mutex);
-		}else if(strcmp(argVector[0], "REG") == 0){
+		}else if(strcmp(argVector[0], CLOSE_TERMINAL_COMMAND) == 0){
+      int pstpid = atoi(argVector[1]);
+      if(pstpid == 0){
+        perror("\e[31m[ Error ]\e[0m CLOSE: terminal PID number invalid");
+      }else{
+        delete_process(lista_terminais, pstpid);
+			  printf("\e[33m[ INFO ]\e[0m par-shell-terminal eliminado (PID %d)\n", pstpid);
+      }
+
+      /*
+      pthread_mutex_lock(&lista_mutex);
+      pthread_mutex_unlock(&lista_mutex);
+      printf("\e[31m[ ERROR ]\e[0m Process %d terminated Abruptly\n", ret );
+      */
+		}else if(strcmp(argVector[0], NEW_TERMINAL_COMMAND) == 0){
 			// uma nova par-shell-terminal vai registar-se
 			int pstpid = atoi(argVector[1]);
-			insert_new_process(lista_terminais, pstpid, time(NULL));
-			printf("\e[33m[ INFO ]\e[0m Novo par-shell-terminal registado (PID %d)\n", pstpid);
+      if(pstpid == 0){
+        perror("\e[31m[ Error ]\e[0m New: terminal PID number invalid");
+      }
+      else{
+			  insert_new_process(lista_terminais, pstpid, time(NULL));
+			  printf("\e[33m[ INFO ]\e[0m Novo par-shell-terminal registado (PID %d)\n", pstpid);
+      }
 		}else{
 			//Antigo sem_wait(&slots_processos_disponiveis);
 			/* Esperar ate que a quota de numero de processos filhos nao seja ultrapassada */
