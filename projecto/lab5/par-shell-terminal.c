@@ -13,6 +13,7 @@
 
 #define EXIT_COMMAND "exit\n"
 #define GLOBAL_EXIT  "exit-global"
+#define NEW_TERMINAL_COMMAND  "NEW_TERMINAL"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
@@ -45,7 +46,7 @@ int main(int argc, char *argv[]){
 
 	int pipe_fd = open_pipew(argv[1]);
 
-	sprintf(output,	"REG %d", getpid());
+	sprintf(output,	"%s %d",NEW_TERMINAL_COMMAND, getpid());
 	write(pipe_fd, output, strlen(output));
 	//close(pipe_fd);
 

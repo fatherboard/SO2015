@@ -14,7 +14,7 @@
 #include "list.h"
 
 #define EXIT_COMMAND "exit"
-#define NEW_TERMINAL_COMMAND "REG"
+#define NEW_TERMINAL_COMMAND "NEW_TERMINAL"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
@@ -49,8 +49,14 @@ static FILE *log;
 int iteration_number = 0, total_exec_time = 0;
 
 void deleteFifo(){
-  system("rm -rf par-shell-in");
-  printf("Removed par-shell-in\n");
+  unlink("./par-shell-in");
+//  system("rm -rf par-shell-in");
+//  system("ls -l ");
+  system("echo -e -n '\e[31m'");
+  system("ls -l  | grep par-shell-in");
+  system("echo -e -n '\e[0m'");
+
+  printf("\e[33m[ INFO ]\e[0m Removed par-shell-in\n");
 }
 
 
