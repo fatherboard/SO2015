@@ -71,11 +71,12 @@ void terminate_terminals(){
 
 
 void ctrlCHandler(int derp){
-  printf("\e[33m[ INFO  ]\e[0m Received SIGINT signal\n");
-  terminate
+  printf("\e[33m[ INFO  ]\e[0m shutdown initiated\n");
 
   terminate_terminals();
   deleteFifo(MAIN_PIPE);
+
+  _exit_ctrl = 1;
 
   pthread_mutex_lock(&comandos_escritos_mutex);
   writtenCommands++;
@@ -285,7 +286,7 @@ int main(int argc, char *argv[]){
 		if(strcmp(argVector[0], EXIT_COMMAND) == 0 || strcmp(argVector[0], EXIT_GLOBAL) == 0){
       ctrlCHandler(0);
       /*FIXME*/
-      _exit_ctrl = 1;
+      //_exit_ctrl = 1;
       /*
 			if(strcmp(argVector[0], EXIT_GLOBAL) == 0){
 				printf("\e[33m[ INFO ]\e[0m exit-global received\n");
@@ -297,7 +298,7 @@ int main(int argc, char *argv[]){
 			/* Avisar que um novo comando foi lancado */
 
       /*FIXME*/
-      pthread_mutex_lock(&comandos_escritos_mutex);
+      /*pthread_mutex_lock(&comandos_escritos_mutex);
 			writtenCommands++;
 			pthread_cond_signal(&comandos_escritos);
 			pthread_mutex_unlock(&comandos_escritos_mutex);
@@ -329,7 +330,7 @@ int main(int argc, char *argv[]){
 			}
 		}else if(strcmp(argVector[0], "stats") == 0){
 			char pipe_name[512];
-			
+
 			sprintf(pipe_name, "par-shell-terminal-in-%s", argVector[1]);
 			int terminal_fifo = open_pipe_write(pipe_name);
 			write(terminal_fifo, "batata", 7);
