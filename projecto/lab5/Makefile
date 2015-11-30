@@ -1,10 +1,10 @@
-all: fib par-shell fail sleeper seg_fault teste terminal
+all: fib par-shell fail sleeper seg_fault teste par-shell-terminal
 
-par-shell: list.c main.c commandlinereader.c
-	gcc main.c list.c commandlinereader.c  -g -lpthread -Wall -o par-shell
+par-shell: list.c main.c commandlinereader.c pipes.c
+	gcc main.c list.c pipes.c commandlinereader.c  -g -lpthread -Wall -o par-shell
 
-par-shell-terminal: par-shell-terminal.c list.c commandlinereader.c
-	gcc par-shell-terminal.c list.c commandlinereader.c -g -o par-shell-terminal
+par-shell-terminal: par-shell-terminal.c list.c commandlinereader.c pipes.c
+	gcc par-shell-terminal.c pipes.c list.c commandlinereader.c -g -o par-shell-terminal
 
 fib: fibonacci.c commandlinereader.c
 	gcc fibonacci.c commandlinereader.c -g -Wall -o fib

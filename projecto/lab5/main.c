@@ -12,6 +12,7 @@
 #include <signal.h>
 #include "commandlinereader.h"
 #include "list.h"
+#include "pipes.h"
 
 #define EXIT_COMMAND "exit"
 #define EXIT_GLOBAL "exit-global"
@@ -183,54 +184,53 @@ int main(int argc, char *argv[]){
 	char str_dummy[50], line[1024];
 	int int_dummy;
 	while(fgets(line, 1024, log) != NULL){
-	  if(sscanf(line, "%s %d", str_dummy, &iteration_number) == 2){
-	    iteration_number++;
-	  }
-	  fgets(line, 1024, log);
-	  if(sscanf(line, "%s %d %s %s %d %s", str_dummy, &int_dummy, str_dummy, str_dummy, &int_dummy, str_dummy) == 6){
-	    // nothing
-	  }
-	  fgets(line, 1024, log);
-	  if(sscanf(line, "%s %s %s %d ", str_dummy, str_dummy, str_dummy, &total_exec_time) == 4){
-	   // exec_time
-	  }
+		if(sscanf(line, "%s %d", str_dummy, &iteration_number) == 2){
+			iteration_number++;
+		}
+		fgets(line, 1024, log);
+		if(sscanf(line, "%s %d %s %s %d %s", str_dummy, &int_dummy, str_dummy, str_dummy, &int_dummy, str_dummy) == 6){
+			// nothing
+		}
+		fgets(line, 1024, log);
+		if(sscanf(line, "%s %s %s %d ", str_dummy, str_dummy, str_dummy, &total_exec_time) == 4){
+			// exec_time
+		}
 	}
 
 
   // Inicializacao dos mutex
 	if (pthread_mutex_init(&children_mutex, NULL) != 0){
-        printf("\e[31m[ ERROR ]\e[0m children_mutex init failed\n");
-        exit(EXIT_FAILURE);
-  }
+		printf("\e[31m[ ERROR ]\e[0m children_mutex init failed\n");
+		exit(EXIT_FAILURE);
+	}
 	if (pthread_mutex_init(&lista_mutex, NULL) != 0){
-        printf("\e[31m[ ERROR ]\e[0m lista_mutex init failed\n");
-        exit(EXIT_FAILURE);
-  }
+		printf("\e[31m[ ERROR ]\e[0m lista_mutex init failed\n");
+		exit(EXIT_FAILURE);
+	}
 	if (pthread_mutex_init(&slots_processos_disponiveis_mutex, NULL) != 0){
-        printf("\e[31m[ ERROR ]\e[0m slots_processos_disponiveis_mutex init failed\n");
-        exit(EXIT_FAILURE);
-  }
+		printf("\e[31m[ ERROR ]\e[0m slots_processos_disponiveis_mutex init failed\n");
+		exit(EXIT_FAILURE);
+	}
 	if (pthread_mutex_init(&comandos_escritos_mutex, NULL) != 0){
-        printf("\e[31m[ ERROR ]\e[0m comandos_escritos_mutex init failed\n");
-        exit(EXIT_FAILURE);
-  }
-  if(__DEBUG__){
-    printf("\e[36m[ DEBUG ]\e[0m mutex init complete\n");
-  }
-
+		printf("\e[31m[ ERROR ]\e[0m comandos_escritos_mutex init failed\n");
+		exit(EXIT_FAILURE);
+	}
+	if(__DEBUG__){
+		printf("\e[33m[ DEBUG ]\e[0m mutex init complete\n");
+	}
 
 	/* Inicializacao das variaveis de condicao*/
 	if(pthread_cond_init(&slots_processos_disponiveis, NULL) != 0){
-				printf("\e[31m[ ERROR ]\e[0m condition variable slots_processos_disponiveis init failed\n");
-				exit(EXIT_FAILURE);
+		printf("\e[31m[ ERROR ]\e[0m condition variable slots_processos_disponiveis init failed\n");
+		exit(EXIT_FAILURE);
 	}
 	if(pthread_cond_init(&comandos_escritos, NULL) != 0){
-				printf("\e[31m[ ERROR ]\e[0m condition variable comandos_escritos init failed\n");
-				exit(EXIT_FAILURE);
+		printf("\e[31m[ ERROR ]\e[0m condition variable comandos_escritos init failed\n");
+		exit(EXIT_FAILURE);
 	}
-  if(__DEBUG__){
-    printf("\e[36m[ DEBUG ]\e[0m pthread_cond init complete\n");
-  }
+	if(__DEBUG__){
+		printf("\e[33m[ DEBUG ]\e[0m pthread_cond init complete\n");
+	}
 
 	/*Criaçao da thread*/
 	pthread_t tid;
@@ -243,35 +243,22 @@ int main(int argc, char *argv[]){
 		printf("\e[31m[ ERROR ]\e[0m Creating Thread\n");
 		exit(EXIT_FAILURE);
 	}
-  if(__DEBUG__){
-    printf("\e[36m[ DEBUG ]\e[0m pthread init complete\n");
-  }
-
-	/* criar fifo */
-	if(mkfifo("par-shell-in", S_IRUSR | S_IWUSR) != 0){
-	    perror("\e[31m[ ERROR ]\e[0m Could not create FIFO");
-	    exit(EXIT_FAILURE);
+	if(__DEBUG__){
+		printf("\e[36m[ DEBUG ]\e[0m pthread init complete\n");
 	}
-  if(__DEBUG__){
-    printf("\e[36m[ DEBUG ]\e[0m fifo creation complete\n");
-  }
 
-	int fifo_fd = open("par-shell-in", O_RDONLY);
-	if(fifo_fd < 0){
-	    perror("\e[31m[ ERROR ]\e[0m Could not open FIFO");
-	    exit(EXIT_FAILURE);
+	int fifo_fd = create_fifo_read("par-shell-in");
+	if(__DEBUG__){
+		printf("\e[36m[ DEBUG ]\e[0m fifo creation and opening complete\n");
 	}
-  if(__DEBUG__){
-    printf("\e[36m[ DEBUG ]\e[0m open fifo complete\n");
-  }
 
 	if(dup2(fifo_fd,0) < 0){
 		perror("\e[31m[ ERROR ]\e[0m Failed to redirect input\n");
 		exit(EXIT_FAILURE);
 	}
-  if(__DEBUG__){
-    printf("\e[36m[ DEBUG ]\e[0m changing inpute chanel complete\n");
-  }
+	if(__DEBUG__){
+		printf("\e[36m[ DEBUG ]\e[0m changing inpute chanel complete\n");
+	}
 
 	printf("\e[33m[ INFO  ]\e[0m Limite de processos filhos: %d\n", MAXPAR);
 	// loop infinito de execucao da par-shell
@@ -281,22 +268,22 @@ int main(int argc, char *argv[]){
 	while(!_exit_ctrl) {
 		// le os argumentos atraves da funcao fornecida
 		if(readLineArguments(argVector, VECTOR_SIZE) <= 0){
-      /*if(__DEBUG__) {
-        printf("\e[36m[ DEBUG ]\e[0m nenhum comando foi lido\n");
-      }*/
-      continue;
-    }
+			/*if(__DEBUG__) {
+			printf("\e[36m[ DEBUG ]\e[0m nenhum comando foi lido\n");
+			}*/
+			continue;
+		}
 		// caso nao tenha sido introduzido um comando, a par-shell prossegue a sua execucao
 		if(argVector[0] == NULL){
 			continue;
 		}
 
 		if(strcmp(argVector[0], NEW_TERMINAL_COMMAND) == 0){
-      if(__DEBUG__) {
-        printf("\e[36m[ DEBUG ]\e[0m New Terminal Added\n");
-      }
-      continue;
-    }
+			if(__DEBUG__) {
+				printf("\e[36m[ DEBUG ]\e[0m New Terminal Added\n");
+			}
+			continue;
+		}
 		if(strcmp(argVector[0], EXIT_COMMAND) == 0 || strcmp(argVector[0], EXIT_GLOBAL) == 0){
 			_exit_ctrl = 1;
 

@@ -10,6 +10,7 @@
 #include <semaphore.h>
 #include "commandlinereader.h"
 #include "list.h"
+#include "pipes.h"
 
 #define EXIT_COMMAND "exit\n"
 #define GLOBAL_EXIT  "exit-global"
@@ -28,8 +29,8 @@ int open_pipew(char *pipe_name){
 	int pipe_fd = open(pipe_name, O_WRONLY);
 
 	if(pipe_fd == -1){
-			perror("\e[31m[ ERROR ]\e[0m opening pipe\n");
-			exit(EXIT_FAILURE);
+		perror("Error opening pipe\n");
+		exit(EXIT_FAILURE);
 	}
 
 	return pipe_fd;
@@ -41,8 +42,8 @@ int main(int argc, char *argv[]){
 	char output[1024], input[1024], aux[1024];
 
 	if(argc < 2){
-			perror("\e[31m[ ERROR ]\e[0m Not enough arguments\n");
-			exit(EXIT_FAILURE);
+		perror("\e[31m[ ERROR ]\e[0m Not enough arguments\n");
+		exit(EXIT_FAILURE);
 	}
 
 	int pipe_fd = open_pipew(argv[1]);
@@ -53,7 +54,6 @@ int main(int argc, char *argv[]){
 		printf("\e[36m[ DEBUG ]\e[0m New msg sent: \'%s\'", output );
 	}
 	write(pipe_fd, output, strlen(output));
-	//close(pipe_fd);
 
 	while(!_exit_ctrl) {
 		fgets(input, 1024, stdin);
