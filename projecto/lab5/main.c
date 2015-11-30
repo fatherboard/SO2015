@@ -304,29 +304,36 @@ int main(int argc, char *argv[]){
       /**/
 
 		}else if(strcmp(argVector[0], CLOSE_TERMINAL_COMMAND) == 0){
-      int pstpid = atoi(argVector[1]);
-      if(pstpid == 0){
-        perror("\e[31m[ Error ]\e[0m CLOSE: terminal PID number invalid");
-      }else{
-        delete_process(lista_terminais, pstpid);
-			  printf("\e[33m[ INFO ]\e[0m par-shell-terminal eliminado (PID %d)\n", pstpid);
-      }
+			int pstpid = atoi(argVector[1]);
+			if(pstpid == 0){
+				perror("\e[31m[ Error ]\e[0m CLOSE: terminal PID number invalid");
+			}else{
+				delete_process(lista_terminais, pstpid);
+				printf("\e[33m[ INFO ]\e[0m par-shell-terminal eliminado (PID %d)\n", pstpid);
+			}
 
-      /*
-      pthread_mutex_lock(&lista_mutex);
-      pthread_mutex_unlock(&lista_mutex);
-      printf("\e[31m[ ERROR ]\e[0m Process %d terminated Abruptly\n", ret );
-      */
+			/*
+			pthread_mutex_lock(&lista_mutex);
+			pthread_mutex_unlock(&lista_mutex);
+			printf("\e[31m[ ERROR ]\e[0m Process %d terminated Abruptly\n", ret );
+			*/
 		}else if(strcmp(argVector[0], NEW_TERMINAL_COMMAND) == 0){
 			// uma nova par-shell-terminal vai registar-se
 			int pstpid = atoi(argVector[1]);
-      if(pstpid == 0){
-        perror("\e[31m[ Error ]\e[0m New: terminal PID number invalid");
-      }
-      else{
-			  insert_new_process(lista_terminais, pstpid, time(NULL));
-			  printf("\e[33m[ INFO ]\e[0m Novo par-shell-terminal registado (PID %d)\n", pstpid);
-      }
+			if(pstpid == 0){
+				perror("\e[31m[ Error ]\e[0m New: terminal PID number invalid");
+			}
+			else{
+				insert_new_process(lista_terminais, pstpid, time(NULL));
+				printf("\e[33m[ INFO ]\e[0m Novo par-shell-terminal registado (PID %d)\n", pstpid);
+			}
+		}else if(strcmp(argVector[0], "stats") == 0){
+			char pipe_name[512];
+			
+			sprintf(pipe_name, "par-shell-terminal-in-%s", argVector[1]);
+			int terminal_fifo = open_pipe_write(pipe_name);
+			write(terminal_fifo, "batata", 7);
+			close(terminal_fifo);
 		}else{
 			//Antigo sem_wait(&slots_processos_disponiveis);
 			/* Esperar ate que a quota de numero de processos filhos nao seja ultrapassada */
