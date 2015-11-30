@@ -29,8 +29,8 @@ void ctrlCHandler(int derp){
 	printf("\e[33m[ INFO ]\e[0m I received SIGINT (by another process or by ctrl+c)\n");
 
 	deleteFifo(fifo_name);
-	sprintf(fifo_name, "rm -rf %s", fifo_name);
-	system(fifo_name);
+	/*sprintf(fifo_name, "rm -rf %s", fifo_name);
+	system(fifo_name);*/
 
 	exit(0);
 }
@@ -62,21 +62,22 @@ int main(int argc, char *argv[]){
 		// caso o utilizador tenha introduzido o comando stats
 		if(strcmp(input, "stats\n") == 0){
 			sprintf(aux, "stats %d\n", getpid());
-			
 			write(shell_fifo, aux, strlen(aux));
-			
 			if(__DEBUG__){
-				printf("\e[36m[ DEBUG ]\e[0m Sent 'stats' command", aux );
+				printf("\e[36m[ DEBUG ]\e[0m msg sent: \'%s", aux );
 			}
-			
+
 			my_fifo = create_fifo_read(fifo_name);
 			read(my_fifo, input, 1024);
-			
+
 			close(my_fifo);
-			
-			printf("DEBUG: %s\n", input);
-			
+			if(__DEBUG__){
+				printf("\e[36m[ DEBUG ]\e[0m msg received: %s\n", input);
+			}
+
 			deleteFifo(fifo_name);
+
+
 		}else if(strcmp(input, EXIT_COMMAND) == 0){
 			sprintf(aux,	"%s %d\n", CLOSE_TERMINAL_COMMAND, getpid());
 			_exit_ctrl = 1;
@@ -84,6 +85,10 @@ int main(int argc, char *argv[]){
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m msg sent: \'%s", aux );
 			}
+
+
+
+
 		}else{
 			write(shell_fifo, input, strlen(input));
 			if(__DEBUG__){

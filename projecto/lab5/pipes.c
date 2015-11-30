@@ -3,7 +3,7 @@
 
 void deleteFifo(char * name){
   if(unlink(name) == -1){
-    printf("\e[31m[ ERROR ]\e[0m to remove pipe %s\n", name);
+    printf("\e[31m[ ERROR ]\e[0m could not remove pipe %s\n", name);
     //exit(EXIT_FAILURE);
   }
   else{
