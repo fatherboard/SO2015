@@ -23,6 +23,13 @@
 
 int _exit_ctrl = 0;
 
+void ctrlCHandler(int derp){
+
+	printf("\e[33m[ INFO ]\e[0m I received SIGINT (by another process or by ctrl+c)\n");
+
+	exit(0);
+}
+
 // don't forget to close with close(fd)
 int open_pipew(char *pipe_name){
 
@@ -41,6 +48,8 @@ int main(int argc, char *argv[]){
 
 	char output[1024], input[1024], aux[1024];
 
+	signal(SIGINT, ctrlCHandler);
+	
 	if(argc < 2){
 		perror("\e[31m[ ERROR ]\e[0m Not enough arguments\n");
 		exit(EXIT_FAILURE);

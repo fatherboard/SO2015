@@ -60,7 +60,8 @@ void terminate_terminals(){
   item = lista_terminais->first;
 
   while(item != NULL){
-     kill(item->pid, SIGKILL);
+     kill(item->pid, SIGINT
+	);
      item = item->next;
   }
 
@@ -282,14 +283,15 @@ int main(int argc, char *argv[]){
 			if(__DEBUG__) {
 				printf("\e[36m[ DEBUG ]\e[0m New Terminal Added\n");
 			}
+			insert_new_process(lista_terminais, atoi(argVector[1]), time(NULL));
 			continue;
 		}
 		if(strcmp(argVector[0], EXIT_COMMAND) == 0 || strcmp(argVector[0], EXIT_GLOBAL) == 0){
 			_exit_ctrl = 1;
 
 			if(strcmp(argVector[0], EXIT_GLOBAL) == 0){
-			  terminate_terminals();
-			  printf("\e[33m[ INFO ]\e[0m exit-global received\n");
+				printf("\e[33m[ INFO ]\e[0m exit-global received\n");
+				terminate_terminals();
 			}
 
 			//Antigo sem_post(&comandos_escritos);
