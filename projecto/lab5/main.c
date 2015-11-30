@@ -36,6 +36,7 @@ pthread_cond_t slots_processos_disponiveis;
 esperar/processar */
 pthread_cond_t comandos_escritos;
 
+pthread_t tid;
 
 pthread_mutex_t slots_processos_disponiveis_mutex;
 pthread_mutex_t comandos_escritos_mutex;
@@ -47,28 +48,58 @@ pthread_mutex_t lista_mutex;
 list_t *lista_processos;
 // a lista_terminais mantem registo dos par-shell-terminal que estao com contacto com esta par-shell
 list_t *lista_terminais;
+
+
+
 int numChildren = 0;
 int _exit_ctrl = 0;
 int writtenCommands = 0;
 int slotsAvaiable = MAXPAR;
 static FILE *log;
 int iteration_number = 0, total_exec_time = 0;
+char **argVector;
 
 void terminate_terminals(){
 
-  lst_iitem_t *item, *prev;
+  lst_iitem_t *item;
   item = lista_terminais->first;
   //prev = lista_terminais->first;
 
   while(item != NULL){
-	 prev = item;
 	 if(__DEBUG__){
-  		printf("\n\n\e[36m[ DEBUG ]\e[0m Killing %d \n\n\n",item->pid);		 
+  		printf("\e[35m[ DEBUG ]\e[0m Killing %d\n",item->pid);
 	 }
      kill(item->pid, SIGINT);
      item = item->next;
-	 free(prev);
   }
+}
+void end_sequence(){
+	printf("\n\e[33m[ INFO  ]\e[0m Joining monitoring thread...\n\n");
+	if(pthread_join(tid, NULL) != 0) {
+		printf("\e[31m[ Error ]\e[0m joining thread.\n");
+		exit(EXIT_FAILURE);
+	}
+  	terminate_terminals();
+	lst_destroy(lista_terminais);
+	// liberta a memoria alocada
+	pthread_mutex_destroy(&children_mutex);
+	pthread_mutex_destroy(&comandos_escritos_mutex);
+	pthread_mutex_destroy(&slots_processos_disponiveis_mutex);
+	lst_print(lista_processos);
+	pthread_mutex_destroy(&lista_mutex);
+
+	lst_destroy(lista_processos);
+	free(argVector);
+	pthread_cond_destroy(&comandos_escritos);
+	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated4\n");
+	pthread_cond_destroy(&slots_processos_disponiveis);
+	printf("\e[33m[ INFO  ]\e[0m cond destroyed\n");
+	fclose(log);
+	// da a mensagem de fim do programa
+	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
+	printf("\e[33m[ INFO  ]\e[0m exiting..\n");
+
+	exit(EXIT_SUCCESS);
 }
 
 void ctrlCHandler(int derp){
@@ -77,13 +108,13 @@ void ctrlCHandler(int derp){
 
   deleteFifo(MAIN_PIPE);
 
-
   // End main par shell orderly
   _exit_ctrl = 1;
   pthread_mutex_lock(&comandos_escritos_mutex);
   writtenCommands++;
   pthread_cond_signal(&comandos_escritos);
   pthread_mutex_unlock(&comandos_escritos_mutex);
+  end_sequence();
 }
 
 void *tarefa_monitora(){
@@ -152,6 +183,7 @@ void *tarefa_monitora(){
 			if(_exit_ctrl){
 				pthread_mutex_unlock(&children_mutex);
 				// terminar thread
+				printf("\e[33m[ INFO  ]\e[0m exiting thread \n");
 				pthread_exit(0);
 			}
 			pthread_mutex_unlock(&children_mutex);
@@ -160,7 +192,6 @@ void *tarefa_monitora(){
 }
 
 int main(int argc, char *argv[]){
-	char **argVector;
 	// o argVector ira guardar o input do utilizador na par-shell. O seu tamanho coincide
 	// com o numero maximo de argumentos permitidos mais um, que corresponde ao nome do
 	// proprio comando
@@ -231,7 +262,7 @@ int main(int argc, char *argv[]){
 	}
 
 	/*Criaçao da thread*/
-	pthread_t tid;
+
 	if(pthread_create (&tid, 0,tarefa_monitora, NULL) == 0)	{
 		if(__DEBUG__){
 			printf ("\e[36m[ DEBUG ]\e[0m Criada a tarefa %d\e[0m\n",(int) tid);
@@ -278,10 +309,7 @@ int main(int argc, char *argv[]){
 			continue;
 		}
 
-		// caso nao tenha sido introduzido um comando, a par-shell prossegue a sua execucao
-		if(argVector[0] == NULL){
-			continue;
-		}
+
 
 		if(strcmp(argVector[0], EXIT_COMMAND) == 0 || strcmp(argVector[0], EXIT_GLOBAL) == 0){
 			ctrlCHandler(0);
@@ -386,22 +414,14 @@ int main(int argc, char *argv[]){
 					perror("\e[31m[ ERROR ]\e[0m Failed to redirect output\n");
 					exit(EXIT_FAILURE);
 				}
-				//close(stdio);
 
 
 				// substitui a imagem do executavel actual pelo especificado no comando introduzido
 
 				if(execv(argVector[0], argVector)){
-					/*if(__DEBUG__){
-						printf("\e[36m[ DEBUG ]\e[0m O comando nao existe na directoria actual.\e[0m\n");
-					}*/
 				}
 				// o processo continua se nao tiver sido possivel fazer a substituicao do executavel na directoria actual
 				if(execvp(argVector[0], argVector)){
-					/*if(__DEBUG__){
-						printf("\e[36m[ DEBUG ]\e[0m O comando nao existe em lado nenhum.\e[0m\n");
-					}*/
-
 					// caso nao tenha sido possivel fazer a substituicao do executavel do processo,
 					// escreve no stderr a razao e termina com status de falha
 					fprintf(stderr, "o comando %s nao existe\n",argVector[0]);
@@ -412,26 +432,6 @@ int main(int argc, char *argv[]){
 	}
 
 	// quando termina, a thread principal sincroniza-se com a monitora
-	printf("\n\e[33m[ INFO  ]\e[0m Joining monitoring thread...\n\n");
-	if(pthread_join(tid, NULL) != 0) {
-		printf("\e[31m[ Error ]\e[0m joining thread.\n");
-		exit(EXIT_FAILURE);
-	}
-  	terminate_terminals();
-	// liberta a memoria alocada
-	pthread_mutex_destroy(&children_mutex);
-	pthread_mutex_destroy(&lista_mutex);
-	pthread_mutex_destroy(&comandos_escritos_mutex);
-	pthread_mutex_destroy(&slots_processos_disponiveis_mutex);
-	lst_print(lista_processos);
-	lst_destroy(lista_processos);
-	free(argVector);
-	pthread_cond_destroy(&comandos_escritos);
-	pthread_cond_destroy(&slots_processos_disponiveis);
-	fclose(log);
-	// da a mensagem de fim do programa
-	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
-	printf("\e[33m[ INFO  ]\e[0m exiting..\n");
-
-	exit(EXIT_SUCCESS);
+	end_sequence();
+	return(EXIT_SUCCESS);
 }
