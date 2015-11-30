@@ -27,9 +27,8 @@ char fifo_name[512];
 void ctrlCHandler(int derp){
 
 	printf("\e[33m[ INFO ]\e[0m I received SIGINT (by another process or by ctrl+c)\n");
-	
-	close(shell_fifo);
-	
+
+	deleteFifo(shell_fifo);
 	sprintf(fifo_name, "rm -rf %s", fifo_name);
 	system(fifo_name);
 
@@ -41,7 +40,7 @@ int main(int argc, char *argv[]){
 	char output[1024], input[1024], aux[1024];
 
 	signal(SIGINT, ctrlCHandler);
-	
+
 	if(argc < 2){
 		perror("\e[31m[ ERROR ]\e[0m Not enough arguments\n");
 		exit(EXIT_FAILURE);
@@ -53,12 +52,11 @@ int main(int argc, char *argv[]){
 	sprintf(output,	"%s %d\n",NEW_TERMINAL_COMMAND, getpid());
 
 	if(__DEBUG__){
-		printf("\e[36m[ DEBUG ]\e[0m New msg sent: \'%s\'", output );
+		printf("\e[36m[ DEBUG ]\e[0m New msg sent: \'%s", output );
 	}
 	write(shell_fifo, output, strlen(output));
 
 	while(!_exit_ctrl) {
-		printf("DEBUG: I'm here again\n");
 		fgets(input, 1024, stdin);
 
 		// caso o utilizador tenha introduzido o comando stats
@@ -82,17 +80,17 @@ int main(int argc, char *argv[]){
 			_exit_ctrl = 1;
 			write(shell_fifo, aux, strlen(aux));
 			if(__DEBUG__){
-				printf("\e[36m[ DEBUG ]\e[0m msg sent: \'%s\'", aux );
+				printf("\e[36m[ DEBUG ]\e[0m msg sent: \'%s", aux );
 			}
 		}else{
 			write(shell_fifo, input, strlen(input));
 			if(__DEBUG__){
-				printf("\e[36m[ DEBUG ]\e[0m msg sent: \'%s\'", input );
+				printf("\e[36m[ DEBUG ]\e[0m msg sent: \'%s", input );
 			}
 		}
 
 	}
 	printf("\e[33m[ INFO ]\e[0m Exiting \n");
-	
+
 	exit(EXIT_SUCCESS);
 }
