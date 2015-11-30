@@ -58,6 +58,7 @@ int main(int argc, char *argv[]){
 	write(shell_fifo, output, strlen(output));
 
 	while(!_exit_ctrl) {
+		printf("DEBUG: I'm here again\n");
 		fgets(input, 1024, stdin);
 
 		// caso o utilizador tenha introduzido o comando stats

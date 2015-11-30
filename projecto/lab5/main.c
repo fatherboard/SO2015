@@ -326,10 +326,11 @@ int main(int argc, char *argv[]){
 			}
 		}else if(strcmp(argVector[0], "stats") == 0){
 			char pipe_name[512];
-			int terminal_fifo;
 			
 			sprintf(pipe_name, "par-shell-terminal-in-%s", argVector[1]);
-			terminal_fifo = open_pipe_write(pipe_name);
+			int terminal_fifo = open_pipe_write(pipe_name);
+			write(terminal_fifo, "batata", 7);
+			close(terminal_fifo);
 		}else{
 			//Antigo sem_wait(&slots_processos_disponiveis);
 			/* Esperar ate que a quota de numero de processos filhos nao seja ultrapassada */
