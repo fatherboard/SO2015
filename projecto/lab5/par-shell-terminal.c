@@ -21,27 +21,20 @@
 #define MAXPAR 4
 #define __DEBUG__ 1
 
-int _exit_ctrl = 0;
+int _exit_ctrl = 0, shell_fifo, my_fifo;
+char fifo_name[512];
 
 void ctrlCHandler(int derp){
 
 	printf("\e[33m[ INFO ]\e[0m I received SIGINT (by another process or by ctrl+c)\n");
+	
+	close(shell_fifo);
+	close(my_fifo);
+	
+	sprintf(fifo_name, "rm -rf %s", fifo_name);
+	system(fifo_name);
 
 	exit(0);
-}
-
-// don't forget to close with close(fd)
-int open_pipew(char *pipe_name){
-
-	int pipe_fd = open(pipe_name, O_WRONLY);
-
-	if(pipe_fd == -1){
-		perror("Error opening pipe\n");
-		exit(EXIT_FAILURE);
-	}
-
-	return pipe_fd;
-
 }
 
 int main(int argc, char *argv[]){
@@ -55,14 +48,16 @@ int main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 
-	int pipe_fd = open_pipew(argv[1]);
+	sprintf(fifo_name, "par-shell-terminal-in-%d", getpid());
+	shell_fifo = open_pipe_write(argv[1]);
+	my_fifo = create_fifo_read(fifo_name);
 
 	sprintf(output,	"%s %d\n",NEW_TERMINAL_COMMAND, getpid());
 
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m New msg sent: \'%s\'", output );
 	}
-	write(pipe_fd, output, strlen(output));
+	write(shell_fifo, output, strlen(output));
 
 	while(!_exit_ctrl) {
 		fgets(input, 1024, stdin);
@@ -70,7 +65,7 @@ int main(int argc, char *argv[]){
 		// caso o utilizador tenha introduzido o comando stats
 		if(strcmp(input, "stats\n") == 0){
 			sprintf(aux,	"%s %d\n", "stats ", getpid());
-			write(pipe_fd, aux, strlen(aux));
+			write(shell_fifo, aux, strlen(aux));
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m msg sent: \'%s\'", aux );
 			}
@@ -78,12 +73,12 @@ int main(int argc, char *argv[]){
 		}else if(strcmp(input, EXIT_COMMAND) == 0){
 			sprintf(aux,	"%s %d\n", CLOSE_TERMINAL_COMMAND, getpid());
 			_exit_ctrl = 1;
-			write(pipe_fd, aux, strlen(aux));
+			write(shell_fifo, aux, strlen(aux));
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m msg sent: \'%s\'", aux );
 			}
 		}else{
-			write(pipe_fd, input, strlen(input));
+			write(shell_fifo, input, strlen(input));
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m msg sent: \'%s\'", input );
 			}
@@ -91,5 +86,6 @@ int main(int argc, char *argv[]){
 
 	}
 	printf("\e[33m[ INFO ]\e[0m Exiting \n");
-	close(pipe_fd);
+	
+	exit(EXIT_SUCCESS);
 }

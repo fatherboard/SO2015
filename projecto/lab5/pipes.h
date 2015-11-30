@@ -7,3 +7,5 @@
 
 int create_fifo_read(char *name);
 int create_fifo_write(char *name);
+int open_pipe_write(char *pipe_name);
+int open_pipe_read(char *pipe_name);

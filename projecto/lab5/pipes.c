@@ -33,3 +33,29 @@ int create_fifo_write(char *name){
 	}
 	return fifo_fd;
 }
+
+int open_pipe_write(char *pipe_name){
+
+	int shell_fifo = open(pipe_name, O_WRONLY);
+
+	if(shell_fifo == -1){
+		perror("Error opening pipe\n");
+		exit(EXIT_FAILURE);
+	}
+
+	return shell_fifo;
+
+}
+
+int open_pipe_read(char *pipe_name){
+
+	int shell_fifo = open(pipe_name, O_RDONLY);
+
+	if(shell_fifo == -1){
+		perror("Error opening pipe\n");
+		exit(EXIT_FAILURE);
+	}
+
+	return shell_fifo;
+
+}

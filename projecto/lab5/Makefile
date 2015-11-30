@@ -26,7 +26,7 @@ gdb: par-shell
 	gdb par-shell
 
 clean:
-	rm -f *.o *.c~ *.h~ Makefile~ par-shell fib teste seg_fault fail time_test sleeper log.txt par-shell-out-*.txt par-shell-terminal par-shell-in
+	rm -f *.o *.c~ *.h~ Makefile~ par-shell fib teste seg_fault fail time_test sleeper log.txt par-shell-out-*.txt par-shell-terminal par-shell-in par-shell-terminal-in-*
 save:
 	cp par-shell-terminal.c ~/ist/SO2015/projecto/lab5
 	cp main.c ~/ist/SO2015/projecto/lab5
