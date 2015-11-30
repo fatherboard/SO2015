@@ -29,7 +29,6 @@ void ctrlCHandler(int derp){
 	printf("\e[33m[ INFO ]\e[0m I received SIGINT (by another process or by ctrl+c)\n");
 	
 	close(shell_fifo);
-	close(my_fifo);
 	
 	sprintf(fifo_name, "rm -rf %s", fifo_name);
 	system(fifo_name);
@@ -50,7 +49,6 @@ int main(int argc, char *argv[]){
 
 	sprintf(fifo_name, "par-shell-terminal-in-%d", getpid());
 	shell_fifo = open_pipe_write(argv[1]);
-	my_fifo = create_fifo_read(fifo_name);
 
 	sprintf(output,	"%s %d\n",NEW_TERMINAL_COMMAND, getpid());
 
@@ -64,12 +62,20 @@ int main(int argc, char *argv[]){
 
 		// caso o utilizador tenha introduzido o comando stats
 		if(strcmp(input, "stats\n") == 0){
-			sprintf(aux,	"%s %d\n", "stats ", getpid());
+			sprintf(aux, "stats %d\n", getpid());
+			
 			write(shell_fifo, aux, strlen(aux));
+			
 			if(__DEBUG__){
-				printf("\e[36m[ DEBUG ]\e[0m msg sent: \'%s\'", aux );
+				printf("\e[36m[ DEBUG ]\e[0m Sent 'stats' command", aux );
 			}
-
+			
+			my_fifo = create_fifo_read(fifo_name);
+			read(my_fifo, input, 1024);
+			
+			close(my_fifo);
+			
+			printf("DEBUG: %s\n", input);
 		}else if(strcmp(input, EXIT_COMMAND) == 0){
 			sprintf(aux,	"%s %d\n", CLOSE_TERMINAL_COMMAND, getpid());
 			_exit_ctrl = 1;
