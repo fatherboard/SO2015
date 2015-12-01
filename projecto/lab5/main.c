@@ -64,22 +64,35 @@ void terminate_terminals(){
   lst_iitem_t *item;
   item = lista_terminais->first;
   //prev = lista_terminais->first;
-
+  int pid;
   while(item != NULL){
+	 pid = item->pid;
 	 if(__DEBUG__){
-  		printf("\e[35m[ DEBUG ]\e[0m Killing %d\n",item->pid);
+  		printf("\e[35m[ KILL  ]\e[0m Killing %d\n",item->pid);
 	 }
-     kill(item->pid, SIGINT);
+
+     kill(pid, SIGINT);
+	 if(__DEBUG__){
+  		printf("\e[35m[ KILL  ]\e[0m Signal Sent to process number %d\n",pid);
+	 }
      item = item->next;
+	 delete_process(lista_terminais, pid);
   }
 }
 void end_sequence(){
+
+	//needed for thread monitora ending
+	_exit_ctrl = 1;
+    pthread_mutex_lock(&comandos_escritos_mutex);
+    writtenCommands++;
+    pthread_cond_signal(&comandos_escritos);
+    pthread_mutex_unlock(&comandos_escritos_mutex);
+
 	printf("\n\e[33m[ INFO  ]\e[0m Joining monitoring thread...\n\n");
 	if(pthread_join(tid, NULL) != 0) {
 		printf("\e[31m[ Error ]\e[0m joining thread.\n");
 		exit(EXIT_FAILURE);
 	}
-  	terminate_terminals();
 	lst_destroy(lista_terminais);
 	// liberta a memoria alocada
 	pthread_mutex_destroy(&children_mutex);
@@ -95,6 +108,7 @@ void end_sequence(){
 	pthread_cond_destroy(&slots_processos_disponiveis);
 	printf("\e[33m[ INFO  ]\e[0m cond destroyed\n");
 	fclose(log);
+  	deleteFifo(MAIN_PIPE);
 	// da a mensagem de fim do programa
 	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
 	printf("\e[33m[ INFO  ]\e[0m exiting..\n");
@@ -103,18 +117,9 @@ void end_sequence(){
 }
 
 void ctrlCHandler(int derp){
-  printf("\e[33m[ INFO  ]\e[0m SHUTDOWN initiated! \n");
-
-
-  deleteFifo(MAIN_PIPE);
-
-  // End main par shell orderly
-  _exit_ctrl = 1;
-  pthread_mutex_lock(&comandos_escritos_mutex);
-  writtenCommands++;
-  pthread_cond_signal(&comandos_escritos);
-  pthread_mutex_unlock(&comandos_escritos_mutex);
-  end_sequence();
+  	printf("\n\e[33m[ INFO  ]\e[0m Terminals hunting has begun! \n");
+	terminate_terminals();
+  	printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
 }
 
 void *tarefa_monitora(){
@@ -302,10 +307,21 @@ int main(int argc, char *argv[]){
 	while(!_exit_ctrl) {
 		// le os argumentos atraves da funcao fornecida
 		if(readLineArguments(argVector, VECTOR_SIZE) <= 0){
-			/*if(__DEBUG__) {
-			}*/
-
-			printf("\e[36m[ DEBUG ]\e[0m nenhum comando foi lido\n");
+			if(__DEBUG__){
+				printf("\e[36m[ DEBUG ]\e[0m niguem esta a escuta, vou ficar bloqueado atraves do open pipe\n");
+			}
+			create_fifo_read(MAIN_PIPE);
+			if(__DEBUG__){
+				printf("\e[36m[ DEBUG ]\e[0m fifo creation complete\n");
+			}
+			int fifo_fd = open_pipe_read(MAIN_PIPE);
+			if(__DEBUG__){
+				printf("\e[36m[ DEBUG ]\e[0m fifo opening complete\n");
+			}
+			if(dup2(fifo_fd,0) < 0){
+				perror("\e[31m[ ERROR ]\e[0m Failed to redirect input\n");
+				exit(EXIT_FAILURE);
+			}
 			continue;
 		}
 
@@ -313,6 +329,7 @@ int main(int argc, char *argv[]){
 
 		if(strcmp(argVector[0], EXIT_COMMAND) == 0 || strcmp(argVector[0], EXIT_GLOBAL) == 0){
 			ctrlCHandler(0);
+			end_sequence();
 		}else if(strcmp(argVector[0], CLOSE_TERMINAL_COMMAND) == 0){
 			int pstpid = atoi(argVector[1]);
 			if(pstpid == 0){

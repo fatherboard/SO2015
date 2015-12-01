@@ -81,8 +81,8 @@ int main(int argc, char *argv[]){
 			}
 			int total_exec_time,numChildren;
 			sscanf(input,"%d %d", &numChildren ,&total_exec_time);
-			printf("\e[33m[ INFO ]\e[0m Num of Children currrently running: %d\n", numChildren);
-			printf("\e[33m[ INFO ]\e[0m Total execution time: %d\n", total_exec_time);
+			printf("\e[33m[ INFO  ]\e[0m Num of Children currrently running: %d\n", numChildren);
+			printf("\e[33m[ INFO  ]\e[0m Total execution time: %d\n", total_exec_time);
 
 			close(my_fifo_fd);
 			deleteFifo(my_fifo_name);

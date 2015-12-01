@@ -3,22 +3,25 @@
 #include <errno.h>
 #define __DEBUG__ 1
 
+char errMsg[512];
 
 void deleteFifo(char * name){
   if(unlink(name) == -1){
 	if(errno == 2){
 		if(__DEBUG__){
-			printf("Pipe Name: %s ",name );
-	    	perror("\e[31m[ ERROR | DEBUG ]\e[0m could not remove pipe ");
+			sprintf(errMsg,	"\e[0;1;31m[ ERROR | DEBUG ]\e[0m could not remove pipe named \'%s\' due to",name);
+	    	perror(errMsg);
 		}
 	}else{
-		printf("Pipe Name: %s ",name );
-	    perror("\e[31m[ ERROR ]\e[0m could not remove pipe ");
+		sprintf(errMsg,	"\e[31m[ ERROR ]\e[0m could not remove pipe named \'%s\' due to",name);
+		/*printf("Pipe Name: %s ",name );
+		fflush(stdout);*/
+	    perror(errMsg);
 		exit(EXIT_FAILURE);
 	}
   }
   else{
-    printf("\e[33m[ INFO  ]\e[0m pipe %s removed with \e[32msucess\e[0m\n", name);
+    printf("\e[33m[ INFO  ]\e[0m pipe named \'%s\' removed with \e[32msucess\e[0m\n", name);
   }
 }
 
@@ -27,8 +30,8 @@ void create_fifo_read(char *name){
 	deleteFifo(name);
 
 	if(mkfifo(name, S_IRUSR | S_IWUSR) != 0){
-		printf("Pipe Name: %s ",name );
-	    perror("\e[31m[ ERROR ]\e[0m Could not create FIFO");
+		sprintf(errMsg,	"\e[31m[ ERROR ]\e[0m Could not create FIFO named \'%s\' due to",name);
+    	perror(errMsg);
 	    exit(EXIT_FAILURE);
 	}
 
@@ -40,8 +43,8 @@ void create_fifo_write(char *name){
 	deleteFifo(name);
 
 	if(mkfifo(name, S_IRUSR | S_IWUSR) != 0){
-		printf("Pipe Name: %s ",name );
-	    perror("\e[31m[ ERROR ]\e[0m Could not create FIFO");
+		sprintf(errMsg,	"\e[31m[ ERROR ]\e[0m Could not create FIFO named \'%s\' due to",name);
+    	perror(errMsg);
 	    exit(EXIT_FAILURE);
 	}
 	//return open_pipe_write(name);
@@ -52,8 +55,8 @@ int open_pipe_write(char *pipe_name){
 	int shell_fifo = open(pipe_name, O_WRONLY);
 
 	if(shell_fifo == -1){
-		printf("Pipe Name: %s \n",pipe_name );
-		perror("\e[31m[ ERROR ]\e[0m opening pipe");
+		sprintf(errMsg,	"\e[31m[ ERROR ]\e[0m opening pipe named \'%s\' due to",pipe_name);
+    	perror(errMsg);
 		exit(EXIT_FAILURE);
 	}
 
@@ -66,8 +69,8 @@ int open_pipe_read(char *pipe_name){
 	int shell_fifo = open(pipe_name, O_RDONLY);
 
 	if(shell_fifo == -1){
-		printf("Pipe Name: %s ",pipe_name );
-		perror("\e[31m[ ERROR ]\e[0m opening pipe");
+		sprintf(errMsg,	"\e[31m[ ERROR ]\e[0m opening pipe named \'%s\' due to",pipe_name);
+    	perror(errMsg);
 		exit(EXIT_FAILURE);
 	}
 
