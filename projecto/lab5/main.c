@@ -122,7 +122,7 @@ void ctrlCHandler(int ignored){
   	printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
 }
 void signalIgnorer(int ignored){
-  	fprintf(stderr, ("\e[34m[ INFO  ]\e[0m SIGNAL ignored! \n");
+  	fprintf(stderr, "\e[34m[ INFO  ]\e[0m SIGNAL ignored! \n");
 	// To avoid children process being halted
 }
 
@@ -419,8 +419,8 @@ int main(int argc, char *argv[]){
 					printf("\e[36m[ DEBUG ]\e[0m Process %d has just started.\n\e[36m[ DEBUG ]\e[0m Executing: %s\n", getpid(), argVector[0] );
 
 
-				int returned = signal(SIGINT, signalIgnorer);
-				printf("\e[34m[ RETURN ]\e[0m%d\n", returned);
+				 signal(SIGINT, signalIgnorer);
+				//printf("\e[34m[ RETURN ]\e[0m%d\n", returned);
 
 				// Creating name
 				char str[25];
