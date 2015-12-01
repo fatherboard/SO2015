@@ -363,7 +363,7 @@ int main(int argc, char *argv[]){
 			}else{
 				sprintf(pipe_name, "par-shell-terminal-in-%s", argVector[1]);
 				int terminal_fifo = open_pipe_write(pipe_name);
-				sprintf(message_to_send, "%d %d\n", numChildren, total_exec_time);
+				sprintf(message_to_send, "%d %d", numChildren, total_exec_time);
 
 				write(terminal_fifo, message_to_send, strlen(message_to_send));
 				if(__DEBUG__){
@@ -417,6 +417,7 @@ int main(int argc, char *argv[]){
 				// PROCESSO FILHO
 				if(__DEBUG__)
 					printf("\e[36m[ DEBUG ]\e[0m Process %d has just started.\n\e[36m[ DEBUG ]\e[0m Executing: %s\n", getpid(), argVector[0] );
+        fclose(log);
 
 
 				 signal(SIGINT, signalIgnorer);

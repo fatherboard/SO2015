@@ -77,7 +77,7 @@ int main(int argc, char *argv[]){
 			my_fifo_fd = open_pipe_read(my_fifo_name);
 			read(my_fifo_fd, input, 1024);
 			if(__DEBUG__){
-				printf("\e[36m[ DEBUG ]\e[0m msg received: %s\n", input);
+				printf("\e[36m[ DEBUG ]\e[0m msg received: %s", input);
 			}
 			int total_exec_time,numChildren;
 			sscanf(input,"%d %d", &numChildren ,&total_exec_time);
