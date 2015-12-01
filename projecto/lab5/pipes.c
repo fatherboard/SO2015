@@ -3,9 +3,10 @@
 #include <errno.h>
 #define __DEBUG__ 1
 
-char errMsg[512];
+
 
 void deleteFifo(char * name){
+  char errMsg[512];
   if(unlink(name) == -1){
 	if(errno == 2){
 		if(__DEBUG__){
@@ -26,7 +27,7 @@ void deleteFifo(char * name){
 }
 
 void create_fifo_read(char *name){
-
+	char errMsg[512];
 	deleteFifo(name);
 
 	if(mkfifo(name, S_IRUSR | S_IWUSR) != 0){
@@ -39,7 +40,7 @@ void create_fifo_read(char *name){
 }
 
 void create_fifo_write(char *name){
-
+	char errMsg[512];
 	deleteFifo(name);
 
 	if(mkfifo(name, S_IRUSR | S_IWUSR) != 0){
@@ -51,7 +52,7 @@ void create_fifo_write(char *name){
 }
 
 int open_pipe_write(char *pipe_name){
-
+	char errMsg[512];
 	int shell_fifo = open(pipe_name, O_WRONLY);
 
 	if(shell_fifo == -1){
@@ -65,7 +66,7 @@ int open_pipe_write(char *pipe_name){
 }
 
 int open_pipe_read(char *pipe_name){
-
+	char errMsg[512];
 	int shell_fifo = open(pipe_name, O_RDONLY);
 
 	if(shell_fifo == -1){

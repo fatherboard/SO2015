@@ -116,10 +116,13 @@ void end_sequence(){
 	exit(EXIT_SUCCESS);
 }
 
-void ctrlCHandler(int derp){
+void ctrlCHandler(int ignored){
   	printf("\n\e[33m[ INFO  ]\e[0m Terminals hunting has begun! \n");
 	terminate_terminals();
   	printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
+}
+void signalIgnorer(int ignored){
+	// To avoid children process being halted
 }
 
 void *tarefa_monitora(){
@@ -307,6 +310,7 @@ int main(int argc, char *argv[]){
 	while(!_exit_ctrl) {
 		// le os argumentos atraves da funcao fornecida
 		if(readLineArguments(argVector, VECTOR_SIZE) <= 0){
+			//If it gets here no pipe is writing so we want it to get blocked
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m niguem esta a escuta, vou ficar bloqueado atraves do open pipe\n");
 			}
@@ -412,6 +416,10 @@ int main(int argc, char *argv[]){
 				// PROCESSO FILHO
 				if(__DEBUG__)
 					printf("\e[36m[ DEBUG ]\e[0m Process %d has just started.\n\e[36m[ DEBUG ]\e[0m Executing: %s\n", getpid(), argVector[0] );
+
+
+				signal(SIGINT, signalIgnorer);				
+
 				// Creating name
 				char str[25];
 				char snum[8];
