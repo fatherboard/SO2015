@@ -14,8 +14,8 @@
 
 #define EXIT_COMMAND "exit\n"
 #define GLOBAL_EXIT  "exit-global"
-#define NEW_TERMINAL_COMMAND  "NEW_TERMINAL"
-#define CLOSE_TERMINAL_COMMAND "CLOSE_TERMINAL"
+#define NEW_TERMINAL_COMMAND   "ffmyqkdbjipyzgjxnbiatqhmpudxovas_new"
+#define CLOSE_TERMINAL_COMMAND "hbtdqvkwcrxixyjbbkwjzqkylqhcdr_close"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4

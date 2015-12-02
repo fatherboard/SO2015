@@ -16,9 +16,9 @@
 
 #define EXIT_COMMAND "exit"
 #define EXIT_GLOBAL "exit-global"
-#define NEW_TERMINAL_COMMAND "NEW_TERMINAL"
 #define MAIN_PIPE "par-shell-in"
-#define CLOSE_TERMINAL_COMMAND "CLOSE_TERMINAL"
+#define NEW_TERMINAL_COMMAND   "ffmyqkdbjipyzgjxnbiatqhmpudxovas_new"
+#define CLOSE_TERMINAL_COMMAND "hbtdqvkwcrxixyjbbkwjzqkylqhcdr_close"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
@@ -67,13 +67,11 @@ void terminate_terminals(){
   int pid;
   while(item != NULL){
 	 pid = item->pid;
-	 if(__DEBUG__){
-  		printf("\e[35m[ KILL  ]\e[0m Killing %d\n",item->pid);
-	 }
+	 printf("\e[35m[ KILL  ]\e[0m Killing %d\n",item->pid);
 
      kill(pid, SIGINT);
 	 if(__DEBUG__){
-  		printf("\e[35m[ KILL  ]\e[0m Signal Sent to process number %d\n",pid);
+		printf("\e[35m[ KILL  ]\e[0m Signal Sent to process number %d\n",pid);
 	 }
      item = item->next;
 	 delete_process(lista_terminais, pid);
@@ -122,13 +120,13 @@ void ctrlCHandler(int ignored){
   	printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
 }
 void signalIgnorer(int ignored){
-  	fprintf(stderr, "\e[34m[ INFO  ]\e[0m SIGNAL ignored! \n");
-	// To avoid children process being halted
+  	fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m signalIgnorer SIGNAL received.. and ignored by %d \n", (int) pthread_self());
+	// To avoid children process being halted..
 }
 
 void *tarefa_monitora(){
 	if(__DEBUG__){
-		printf("\e[36m[ DEBUG ]\e[0m Estamos na tarefa_monitora %d\n", (int) pthread_self() );
+		printf("\e[34m[ THREAD]\e[0m Estamos na tarefa_monitora (pthread_self) %d\n", (int) pthread_self() );
   	}
 
 	int status,dif;
@@ -201,9 +199,12 @@ void *tarefa_monitora(){
 }
 
 int main(int argc, char *argv[]){
+	if(__DEBUG__)
+		printf("\e[34m[ THREAD]\e[0m Main (pthread_self) %d\n", (int) pthread_self() );
 	// o argVector ira guardar o input do utilizador na par-shell. O seu tamanho coincide
 	// com o numero maximo de argumentos permitidos mais um, que corresponde ao nome do
 	// proprio comando
+
 	argVector = (char **) malloc(VECTOR_SIZE * sizeof(char*));
 
 	lista_processos = lst_new();
@@ -415,13 +416,14 @@ int main(int argc, char *argv[]){
 				pthread_mutex_unlock(&comandos_escritos_mutex);
 			}else{
 				// PROCESSO FILHO
-				if(__DEBUG__)
-					printf("\e[36m[ DEBUG ]\e[0m Process %d has just started.\n\e[36m[ DEBUG ]\e[0m Executing: %s\n", getpid(), argVector[0] );
-        fclose(log);
+				if(__DEBUG__){
+					printf("\e[36m[ DEBUG ]\e[0m Process %d has just started.\n", getpid() );
+					printf("\e[36m[ DEBUG ]\e[0m Executing: %s\n", argVector[0] );
+				}
+        		//fclose(log);
 
 
-				 signal(SIGINT, signalIgnorer);
-				//printf("\e[34m[ RETURN ]\e[0m%d\n", returned);
+			 	//signal(SIGINT, signalIgnorer);
 
 				// Creating name
 				char str[25];
