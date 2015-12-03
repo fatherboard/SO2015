@@ -97,7 +97,6 @@ void end_sequence(){
   	}
   	lst_destroy(lista_terminais);
   	// liberta a memoria alocada
-    printf("\e[33m[ INFO  ]\e[0m Par-shell before destroy \e[35mhere\e[0m\n");
   	pthread_mutex_destroy(&children_mutex);
   	pthread_mutex_destroy(&comandos_escritos_mutex);
   	pthread_mutex_destroy(&slots_processos_disponiveis_mutex);
@@ -109,18 +108,8 @@ void end_sequence(){
   	pthread_cond_destroy(&comandos_escritos);
   	fclose(log);
 
-    //needed in case slots_processos_disponiveis is blocked
-    //Not really working
-    /*pthread_mutex_lock(&slots_processos_disponiveis_mutex);
-    slotsAvaiable++;
-    pthread_cond_signal(&slots_processos_disponiveis);
-    pthread_mutex_unlock(&slots_processos_disponiveis_mutex);*/
-    printf("\e[33m[ INFO  ]\e[0m Par-shell before destroy \e[36mhere\e[0m\n");
   	pthread_cond_destroy(&slots_processos_disponiveis);
 
-
-
-  	printf("\e[33m[ INFO  ]\e[0m cond destroyed\n");
   	// da a mensagem de fim do programa
   	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
   	printf("\e[33m[ INFO  ]\e[0m exiting..\n");
@@ -129,9 +118,9 @@ void end_sequence(){
 }
 
 void *tarefa_monitora(){
-	//if(__DEBUG__){
+	if(__DEBUG__){
 		printf("\e[34m[ THREAD]\e[0m Estamos na tarefa_monitora (pthread_self) %d\n", (int) pthread_self() );
-  //}
+  }
 
 	int status,dif;
 
@@ -202,9 +191,12 @@ void *tarefa_monitora(){
 }
 
 void ctrlCHandler(int ignored){
-
-    fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m SIGNAL received.. and handled by %d \n", (int) pthread_self());
-    end_sequence();
+    char final_command[512];
+    int shell_fifo = open_pipe_write(MAIN_PIPE);
+    sprintf(final_command,	"%s\n",EXIT_GLOBAL);
+    write(shell_fifo, final_command, strlen(final_command));
+    close(shell_fifo);
+    fprintf(stderr, "\n\e[1;34m[ INFO  ]\e[0m SIGNAL received.. and handled by %d \n", (int) pthread_self());
 }
 /*void signalIgnorer(int ignored){
   	fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m signalIgnorer SIGNAL received.. and ignored by %d \n", (int) getpid());
@@ -301,9 +293,8 @@ void changing_inpute_chanel(){
 	printf("\e[33m[ INFO  ]\e[0m changing inpute chanel \e[32mComplete\e[0m\n");
 }
 
-
 int main(int argc, char *argv[]){
-	//if(__DEBUG__)
+	if(__DEBUG__)
 		printf("\e[34m[ THREAD]\e[0m Main (pthread_self) %d\n", (int) pthread_self() );
 
 	// Inicializacao das listas
@@ -312,17 +303,21 @@ int main(int argc, char *argv[]){
 	lista_processos = lst_new();
 	lista_terminais = lst_new();
 
-	// Booting Process
 
+	// Booting Process
 
 	// Instalacao do sinal
 	signal(SIGINT, ctrlCHandler);
+
 	read_log_file();
 	mutex_init();
   pthread_cond_initiation();
 	pthread_creation();
 	changing_inpute_chanel();
-	printf("\e[33m[ INFO  ]\e[0m Limite de processos filhos: %d\n", MAXPAR);
+
+
+	// Booting Process Complete
+  printf("\e[33m[ INFO  ]\e[0m Limite de processos filhos: %d\n", MAXPAR);
 	printf("\e[33m[ INFO  ]\e[0m Booting Process \e[32mComplete\e[0m.\n");
 
 
@@ -479,7 +474,6 @@ int main(int argc, char *argv[]){
 		}
 	}
 
-	// quando termina, a thread principal sincroniza-se com a monitora
-	end_sequence();
-	return(EXIT_SUCCESS);
+  // It should never return here
+	return(EXIT_FAILURE);
 }
