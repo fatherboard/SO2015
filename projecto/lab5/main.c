@@ -78,45 +78,60 @@ void terminate_terminals(){
 }
 void end_sequence(){
 
+    printf("\n\e[33m[ INFO  ]\e[0m Terminals hunting has begun! \n");
+    terminate_terminals();
+    printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
   	deleteFifo(MAIN_PIPE);
-	//needed for thread *monitora* completion
-	_exit_ctrl = 1;
+
+    //needed for thread *monitora* completion
+	  _exit_ctrl = 1;
     pthread_mutex_lock(&comandos_escritos_mutex);
     writtenCommands++;
     pthread_cond_signal(&comandos_escritos);
     pthread_mutex_unlock(&comandos_escritos_mutex);
 
-	printf("\n\e[33m[ INFO  ]\e[0m Joining monitoring thread...\n\n");
-	if(pthread_join(tid, NULL) != 0) {
-		printf("\e[31m[ Error ]\e[0m joining thread.\n");
-		exit(EXIT_FAILURE);
-	}
-	lst_destroy(lista_terminais);
-	// liberta a memoria alocada
-	pthread_mutex_destroy(&children_mutex);
-	pthread_mutex_destroy(&comandos_escritos_mutex);
-	pthread_mutex_destroy(&slots_processos_disponiveis_mutex);
-	lst_print(lista_processos);
-	pthread_mutex_destroy(&lista_mutex);
+  	printf("\n\e[33m[ INFO  ]\e[0m Joining monitoring thread...\n\n");
+  	if(pthread_join(tid, NULL) != 0) {
+  		printf("\e[31m[ Error ]\e[0m joining thread.\n");
+  		exit(EXIT_FAILURE);
+  	}
+  	lst_destroy(lista_terminais);
+  	// liberta a memoria alocada
+    printf("\e[33m[ INFO  ]\e[0m Par-shell before destroy \e[35mhere\e[0m\n");
+  	pthread_mutex_destroy(&children_mutex);
+  	pthread_mutex_destroy(&comandos_escritos_mutex);
+  	pthread_mutex_destroy(&slots_processos_disponiveis_mutex);
+  	lst_print(lista_processos);
+  	pthread_mutex_destroy(&lista_mutex);
 
-	lst_destroy(lista_processos);
-	free(argVector);
-	pthread_cond_destroy(&comandos_escritos);
-	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated4\n");
-	pthread_cond_destroy(&slots_processos_disponiveis);
-	printf("\e[33m[ INFO  ]\e[0m cond destroyed\n");
-	fclose(log);
-	// da a mensagem de fim do programa
-	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
-	printf("\e[33m[ INFO  ]\e[0m exiting..\n");
+  	lst_destroy(lista_processos);
+  	free(argVector);
+  	pthread_cond_destroy(&comandos_escritos);
+  	fclose(log);
 
-	exit(EXIT_SUCCESS);
+    //needed in case slots_processos_disponiveis is blocked
+    //Not really working
+    /*pthread_mutex_lock(&slots_processos_disponiveis_mutex);
+    slotsAvaiable++;
+    pthread_cond_signal(&slots_processos_disponiveis);
+    pthread_mutex_unlock(&slots_processos_disponiveis_mutex);*/
+    printf("\e[33m[ INFO  ]\e[0m Par-shell before destroy \e[36mhere\e[0m\n");
+  	pthread_cond_destroy(&slots_processos_disponiveis);
+
+
+
+  	printf("\e[33m[ INFO  ]\e[0m cond destroyed\n");
+  	// da a mensagem de fim do programa
+  	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
+  	printf("\e[33m[ INFO  ]\e[0m exiting..\n");
+
+  	exit(EXIT_SUCCESS);
 }
 
 void *tarefa_monitora(){
-	if(__DEBUG__){
+	//if(__DEBUG__){
 		printf("\e[34m[ THREAD]\e[0m Estamos na tarefa_monitora (pthread_self) %d\n", (int) pthread_self() );
-  	}
+  //}
 
 	int status,dif;
 
@@ -187,15 +202,14 @@ void *tarefa_monitora(){
 }
 
 void ctrlCHandler(int ignored){
-  	fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m SIGNAL received.. and handled by %d \n", (int) getpid());
-  	printf("\n\e[33m[ INFO  ]\e[0m Terminals hunting has begun! \n");
-	terminate_terminals();
-  	printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
+
+    fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m SIGNAL received.. and handled by %d \n", (int) pthread_self());
+    end_sequence();
 }
-void signalIgnorer(int ignored){
+/*void signalIgnorer(int ignored){
   	fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m signalIgnorer SIGNAL received.. and ignored by %d \n", (int) getpid());
-	// To avoid children process being halted..
-}
+    // To avoid children process being halted..
+}*/
 void read_log_file(){
 	/* Abrir FIcheiro */
 	log = fopen("log.txt","a+");
@@ -289,7 +303,7 @@ void changing_inpute_chanel(){
 
 
 int main(int argc, char *argv[]){
-	if(__DEBUG__)
+	//if(__DEBUG__)
 		printf("\e[34m[ THREAD]\e[0m Main (pthread_self) %d\n", (int) pthread_self() );
 
 	// Inicializacao das listas
@@ -305,7 +319,7 @@ int main(int argc, char *argv[]){
 	signal(SIGINT, ctrlCHandler);
 	read_log_file();
 	mutex_init();
-    pthread_cond_initiation();
+  pthread_cond_initiation();
 	pthread_creation();
 	changing_inpute_chanel();
 	printf("\e[33m[ INFO  ]\e[0m Limite de processos filhos: %d\n", MAXPAR);
@@ -339,7 +353,6 @@ int main(int argc, char *argv[]){
 
 
 		if(strcmp(argVector[0], EXIT_COMMAND) == 0 || strcmp(argVector[0], EXIT_GLOBAL) == 0){
-			ctrlCHandler(0);
 			end_sequence();
 		}else if(strcmp(argVector[0], CLOSE_TERMINAL_COMMAND) == 0){
 			int pstpid = atoi(argVector[1]);
@@ -425,10 +438,10 @@ int main(int argc, char *argv[]){
 					printf(" %s", argVector[1] );
 				printf("\e[0m`\n");
 
-        		//fclose(log);
+        fclose(log);
 
 
-			 	signal(SIGINT, signalIgnorer);
+			 	signal(SIGINT, SIG_IGN);
 
 				// Creating name
 				char str[25];
