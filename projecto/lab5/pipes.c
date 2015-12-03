@@ -15,8 +15,6 @@ void deleteFifo(char * name){
 		}
 	}else{
 		sprintf(errMsg,	"\e[31m[ ERROR ]\e[0m could not remove pipe named \'%s\' due to",name);
-		/*printf("Pipe Name: %s ",name );
-		fflush(stdout);*/
 	    perror(errMsg);
 		exit(EXIT_FAILURE);
 	}
@@ -35,8 +33,6 @@ void create_fifo_read(char *name){
     	perror(errMsg);
 	    exit(EXIT_FAILURE);
 	}
-
-	//return open_pipe_read(name);
 }
 
 void create_fifo_write(char *name){
@@ -48,7 +44,6 @@ void create_fifo_write(char *name){
     	perror(errMsg);
 	    exit(EXIT_FAILURE);
 	}
-	//return open_pipe_write(name);
 }
 
 int open_pipe_write(char *pipe_name){
