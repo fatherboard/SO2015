@@ -19,7 +19,7 @@
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
-#define __DEBUG__ 1
+#define __DEBUG__ 0
 
 int _exit_ctrl = 0;
 int shell_fifo, my_fifo_fd;
@@ -81,8 +81,8 @@ int main(int argc, char *argv[]){
 			}
 			int total_exec_time,numChildren;
 			sscanf(input,"%d %d", &numChildren ,&total_exec_time);
-			printf("\e[33m[ INFO  ]\e[0m Num of Children currrently running: %d\n", numChildren);
-			printf("\e[33m[ INFO  ]\e[0m Total execution time: %d\n", total_exec_time);
+			printf("\e[33m[ INFO  ]\e[0m Num Children running: %d\n", numChildren);
+			printf("\e[33m[ INFO  ]\e[0m Total execution time: %d seconds\n", total_exec_time);
 
 			close(my_fifo_fd);
 			deleteFifo(my_fifo_name);

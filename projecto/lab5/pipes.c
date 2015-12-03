@@ -1,7 +1,7 @@
 #include "pipes.h"
 #include <unistd.h>
 #include <errno.h>
-#define __DEBUG__ 1
+#define __DEBUG__ 0
 
 
 
