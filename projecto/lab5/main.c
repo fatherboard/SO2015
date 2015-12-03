@@ -186,14 +186,14 @@ void *tarefa_monitora(){
 	}
 }
 
-
 void ctrlCHandler(int ignored){
+  	fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m SIGNAL received.. and handled by %d \n", (int) getpid());
   	printf("\n\e[33m[ INFO  ]\e[0m Terminals hunting has begun! \n");
 	terminate_terminals();
   	printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
 }
 void signalIgnorer(int ignored){
-  	fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m signalIgnorer SIGNAL received.. and ignored by %d \n", (int) pthread_self());
+  	fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m signalIgnorer SIGNAL received.. and ignored by %d \n", (int) getpid());
 	// To avoid children process being halted..
 }
 void read_log_file(){
@@ -428,7 +428,7 @@ int main(int argc, char *argv[]){
         		//fclose(log);
 
 
-			 	//signal(SIGINT, signalIgnorer);
+			 	signal(SIGINT, signalIgnorer);
 
 				// Creating name
 				char str[25];
