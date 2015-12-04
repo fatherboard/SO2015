@@ -58,7 +58,7 @@ int slotsAvaiable = MAXPAR;
 static FILE *log;
 int iteration_number = 0, total_exec_time = 0;
 char **argVector;
-
+int noProcessesRunning = 1;
 
 void terminate_terminals(){
 	lst_iitem_t *item;
@@ -190,17 +190,20 @@ void *tarefa_monitora(){
 
 
 void ctrlCHandler(int ignored){
-		//end_sequence();
     fprintf(stderr, "\n\e[1;34m[ INFO  ]\e[0m SIGNAL received by %d \n", (int) pthread_self());
-    char final_command[512];
-    int shell_fifo = open_pipe_write(MAIN_PIPE);
-		printf("\n\e[33m[ INFO  ]\e[0m Terminals hunting has begun! \n");
-    terminate_terminals();
-    printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
-    sprintf(final_command,	"%s\n",EXIT_GLOBAL);
-    write(shell_fifo, final_command, strlen(final_command));
-    close(shell_fifo);
-    fprintf(stderr,    "\e[1;34m[ INFO  ]\e[0m SIGNAL handled by %d \n", (int) pthread_self());
+		if (noProcessesRunning == 1)
+			end_sequence();
+		else{
+	    char final_command[512];
+	    int shell_fifo = open_pipe_write(MAIN_PIPE);
+			printf("\n\e[33m[ INFO  ]\e[0m Terminals hunting has begun! \n");
+	    terminate_terminals();
+	    printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
+	    sprintf(final_command,	"%s\n",EXIT_GLOBAL);
+	    write(shell_fifo, final_command, strlen(final_command));
+	    close(shell_fifo);
+	    fprintf(stderr,    "\e[1;34m[ INFO  ]\e[0m SIGNAL handled by %d \n", (int) pthread_self());
+		}
 }
 
 void read_log_file(){
@@ -286,6 +289,7 @@ void changing_inpute_chanel(){
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m fifo opening complete\n");
 	}
+	noProcessesRunning = 0;
 
 	if(dup2(fifo_fd,0) < 0){
 		perror("\e[31m[ ERROR ]\e[0m Failed to redirect input\n");
@@ -330,11 +334,13 @@ int main(int argc, char *argv[]){
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m niguem esta a escuta, vou ficar bloqueado atraves do open pipe\n");
 			}
+			noProcessesRunning = 1;
 			create_fifo_read(MAIN_PIPE);
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m fifo creation complete\n");
 			}
 			int fifo_fd = open_pipe_read(MAIN_PIPE);
+			noProcessesRunning = 0;
 			if(__DEBUG__){
 				printf("\e[36m[ DEBUG ]\e[0m fifo opening complete\n");
 			}
