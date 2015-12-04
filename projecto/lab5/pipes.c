@@ -48,9 +48,11 @@ void create_fifo_write(char *name){
 
 int open_pipe_write(char *pipe_name){
   printf("open:1");
+  fflush(stdout);
 	char errMsg[512];
 	int shell_fifo = open(pipe_name, O_WRONLY);
   printf("open:2");
+  fflush(stdout);
 
 	if(shell_fifo == -1){
 		sprintf(errMsg,	"\e[31m[ ERROR ]\e[0m opening pipe named \'%s\' due to",pipe_name);
@@ -58,6 +60,7 @@ int open_pipe_write(char *pipe_name){
 		exit(EXIT_FAILURE);
 	}
   printf("open:3");
+  fflush(stdout);
 
 	return shell_fifo;
 
