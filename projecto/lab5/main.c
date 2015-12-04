@@ -194,11 +194,11 @@ void ctrlCHandler(int ignored){
 		if (noProcessesRunning == 1)
 			end_sequence();
 		else{
-	    char final_command[512];
-	    int shell_fifo = open_pipe_write(MAIN_PIPE);
 			printf("\n\e[33m[ INFO  ]\e[0m Terminals hunting has begun! \n");
 	    terminate_terminals();
 	    printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
+	    char final_command[512];
+	    int shell_fifo = open_pipe_write(MAIN_PIPE);
 	    sprintf(final_command,	"%s\n",EXIT_GLOBAL);
 	    write(shell_fifo, final_command, strlen(final_command));
 	    close(shell_fifo);
