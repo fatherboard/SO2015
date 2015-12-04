@@ -19,7 +19,7 @@
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
-#define __DEBUG__ 1
+#define __DEBUG__ 0
 
 int _exit_ctrl = 0;
 int shell_fifo, my_fifo_fd;

@@ -24,7 +24,7 @@
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
-#define __DEBUG__ 1
+#define __DEBUG__ 0
 
 /* Ver ficheiro README.md para obter a sintaxe dos comandos
 de comunicacao entre a par-shell e os terminais 	*/
