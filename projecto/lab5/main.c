@@ -60,7 +60,6 @@ int iteration_number = 0, total_exec_time = 0;
 char **argVector;
 
 
-
 void terminate_terminals(){
 	lst_iitem_t *item;
 	item = lista_terminais->first;
@@ -191,7 +190,7 @@ void *tarefa_monitora(){
 
 
 void ctrlCHandler(int ignored){
-		end_sequence();
+		//end_sequence();
     fprintf(stderr, "\n\e[1;34m[ INFO  ]\e[0m SIGNAL received by %d \n", (int) pthread_self());
     char final_command[512];
     int shell_fifo = open_pipe_write(MAIN_PIPE);
