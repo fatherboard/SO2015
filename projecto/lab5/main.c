@@ -25,7 +25,7 @@
 #define __DEBUG__ 1
 
 /* Ver ficheiro README.md para obter a sintaxe dos comandos
-   de comunicacao entre a par-shell e os terminais 	*/
+de comunicacao entre a par-shell e os terminais 	*/
 
 /* variaveis de sincronizaçao */
 
@@ -49,8 +49,6 @@ list_t *lista_processos;
 // a lista_terminais mantem registo dos par-shell-terminal que estao com contacto com esta par-shell
 list_t *lista_terminais;
 
-
-
 int numChildren = 0;
 int _exit_ctrl = 0;
 int writtenCommands = 0;
@@ -64,122 +62,118 @@ void test_mutexes(){
 	pthread_mutex_lock(&children_mutex);
 	pthread_mutex_unlock(&children_mutex);
 	printf("\e[36m[ DEBUG ]\e[0m I waited for children_mutex\n");
-	
+
 	printf("\e[36m[ DEBUG ]\e[0m I will wait for comandos_escritos_mutex\n");
 	pthread_mutex_lock(&comandos_escritos_mutex);
 	pthread_mutex_unlock(&comandos_escritos_mutex);
 	printf("\e[36m[ DEBUG ]\e[0m I waited for comandos_escritos_mutex\n");
-	
+
 	printf("\e[36m[ DEBUG ]\e[0m I will wait for slots_processos_disponiveis_mutex\n");
 	pthread_mutex_lock(&slots_processos_disponiveis_mutex);
 	pthread_mutex_unlock(&slots_processos_disponiveis_mutex);
 	printf("\e[36m[ DEBUG ]\e[0m I waited for slots_processos_disponiveis_mutex\n");
-	
+
 	printf("\e[36m[ DEBUG ]\e[0m I will wait for lista_mutex\n");
 	pthread_mutex_lock(&lista_mutex);
 	pthread_mutex_unlock(&lista_mutex);
 	printf("\e[36m[ DEBUG ]\e[0m I waited for lista_mutex\n");
-	
-  	lst_print(lista_processos);
-  	pthread_mutex_destroy(&lista_mutex);
 }
 
 void terminate_terminals(){
-  lst_iitem_t *item;
-  item = lista_terminais->first;
-  //prev = lista_terminais->first;
-  int pid;
-  while(item != NULL){
-	 pid = item->pid;
-	 printf("\e[35m[ KILL  ]\e[0m Killing %d\n",item->pid);
+	lst_iitem_t *item;
+	item = lista_terminais->first;
+	//prev = lista_terminais->first;
+	int pid;
+	while(item != NULL){
+		pid = item->pid;
+		printf("\e[35m[ KILL  ]\e[0m Killing %d\n",item->pid);
 
-     kill(pid, SIGINT);
-	 if(__DEBUG__){
-		printf("\e[35m[ KILL  ]\e[0m Signal Sent to process number %d\n",pid);
-	 }
-     item = item->next;
-	 delete_process(lista_terminais, pid);
-  }
+		kill(pid, SIGINT);
+		if(__DEBUG__){
+			printf("\e[35m[ KILL  ]\e[0m Signal Sent to process number %d\n",pid);
+		}
+		item = item->next;
+		delete_process(lista_terminais, pid);
+	}
 }
+
 void end_sequence(){
+	printf("\n\e[33m[ INFO  ]\e[0m Terminals hunting has begun! \n");
+	terminate_terminals();
+	printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
+	deleteFifo(MAIN_PIPE);
 
-    printf("\n\e[33m[ INFO  ]\e[0m Terminals hunting has begun! \n");
-    terminate_terminals();
-    printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
-  	deleteFifo(MAIN_PIPE);
+	//needed for thread *monitora* completion
+	_exit_ctrl = 1;
+	pthread_mutex_lock(&comandos_escritos_mutex);
+	writtenCommands++;
+	pthread_cond_signal(&comandos_escritos);
+	pthread_mutex_unlock(&comandos_escritos_mutex);
 
-    //needed for thread *monitora* completion
-	  _exit_ctrl = 1;
-    pthread_mutex_lock(&comandos_escritos_mutex);
-    writtenCommands++;
-    pthread_cond_signal(&comandos_escritos);
-    pthread_mutex_unlock(&comandos_escritos_mutex);
-
-  	printf("\n\e[33m[ INFO  ]\e[0m Joining monitoring thread...\n\n");
-  	if(__DEBUG__){
+	printf("\n\e[33m[ INFO  ]\e[0m Joining monitoring thread...\n\n");
+	if(__DEBUG__){
 		printf("Then I will proceed to debug\n");
 	}
-  	if(pthread_join(tid, NULL) != 0) {
-  		printf("\e[31m[ Error ]\e[0m joining thread.\n");
-  		exit(EXIT_FAILURE);
-  	}
-  	lst_destroy(lista_terminais);
-  	// liberta a memoria alocada
-    printf("\e[33m[ INFO  ]\e[0m Par-shell before destroy \e[35mhere\e[0m\n");
-    printf("\e[33m[ INFO  ]\e[0m __DEBUG__ = %d, so testing will ", __DEBUG__);
-    if(!__DEBUG__)
+	if(pthread_join(tid, NULL) != 0) {
+		printf("\e[31m[ Error ]\e[0m joining thread.\n");
+		exit(EXIT_FAILURE);
+	}
+	lst_destroy(lista_terminais);
+	// liberta a memoria alocada
+	printf("\e[33m[ INFO  ]\e[0m Par-shell before destroy \e[35mhere\e[0m\n");
+	printf("\e[33m[ INFO  ]\e[0m __DEBUG__ = %d, so testing will ", __DEBUG__);
+	if(!__DEBUG__){
 		printf("not ");
+	}
 	printf("be executed\n");
-    if(__DEBUG__){
+	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m I will test the locks\n");
 		test_mutexes();
 		printf("\e[36m[ DEBUG ]\e[0m I finished testing the locks\n");
 	}
-  	pthread_mutex_destroy(&children_mutex);
-  	if(__DEBUG__)
+	pthread_mutex_destroy(&children_mutex);
+	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m children_mutex was destroyed\n");
-  	pthread_mutex_destroy(&comandos_escritos_mutex);
-  	if(__DEBUG__)
+	}
+	pthread_mutex_destroy(&comandos_escritos_mutex);
+	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m comandos_escritos_mutex was destroyed\n");
-  	pthread_mutex_destroy(&slots_processos_disponiveis_mutex);
-  	if(__DEBUG__)
+	}
+	pthread_mutex_destroy(&slots_processos_disponiveis_mutex);
+	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m slots_processos_disponiveis_mutex was destroyed\n");
-  	lst_print(lista_processos);
-  	pthread_mutex_destroy(&lista_mutex);
+	}
+	lst_print(lista_processos);
+	pthread_mutex_destroy(&lista_mutex);
 
-  	lst_destroy(lista_processos);
-  	free(argVector);
-  	pthread_cond_destroy(&comandos_escritos);
-  	fclose(log);
+	lst_destroy(lista_processos);
+	free(argVector);
+	pthread_cond_destroy(&comandos_escritos);
+	fclose(log);
 
-    //needed in case slots_processos_disponiveis is blocked
-    //Not really working
-    /*pthread_mutex_lock(&slots_processos_disponiveis_mutex);
-    slotsAvaiable++;
-    pthread_cond_signal(&slots_processos_disponiveis);
-    pthread_mutex_unlock(&slots_processos_disponiveis_mutex);*/
-    printf("\e[33m[ INFO  ]\e[0m Par-shell before destroy \e[36mhere\e[0m\n");
-  	pthread_cond_destroy(&slots_processos_disponiveis);
+	//needed in case slots_processos_disponiveis is blocked
+	//Not really working
+	/*pthread_mutex_lock(&slots_processos_disponiveis_mutex);
+	slotsAvaiable++;
+	pthread_cond_signal(&slots_processos_disponiveis);
+	pthread_mutex_unlock(&slots_processos_disponiveis_mutex);*/
+	printf("\e[33m[ INFO  ]\e[0m Par-shell before destroy \e[36mhere\e[0m\n");
+	pthread_cond_destroy(&slots_processos_disponiveis);
 
+	printf("\e[33m[ INFO  ]\e[0m cond destroyed\n");
+	// da a mensagem de fim do programa
+	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
+	printf("\e[33m[ INFO  ]\e[0m exiting...\n");
 
-
-  	printf("\e[33m[ INFO  ]\e[0m cond destroyed\n");
-  	// da a mensagem de fim do programa
-  	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
-  	printf("\e[33m[ INFO  ]\e[0m exiting..\n");
-
-  	exit(EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
 
 void *tarefa_monitora(){
-	//if(__DEBUG__){
-		printf("\e[34m[ THREAD]\e[0m Estamos na tarefa_monitora (pthread_self) %d\n", (int) pthread_self() );
-  //}
+	printf("\e[34m[ THREAD]\e[0m Estamos na tarefa_monitora (pthread_self) %d\n", (int) pthread_self());
 
-	int status,dif;
+	int status, dif;
 
 	while(1){
-
 		//Antigo sem_wait(&comandos_escritos);
 		/* Esperar que tenha sido escrito um comando */
 		pthread_mutex_lock(&comandos_escritos_mutex);
@@ -196,7 +190,6 @@ void *tarefa_monitora(){
 			// aguarda pela terminacao dos processos filhos
 			pid_t ret = wait(&status);
 
-
 			/*Assinalar que existe mais um slot*/
 			//Antigo sem_post(&slots_processos_disponiveis);
 			pthread_mutex_lock(&slots_processos_disponiveis_mutex);
@@ -204,7 +197,7 @@ void *tarefa_monitora(){
 			pthread_cond_signal(&slots_processos_disponiveis);
 			pthread_mutex_unlock(&slots_processos_disponiveis_mutex);
 
-			printf("\e[33m[ INFO  ]\e[0m Process `\e[1m%d\e[0m` finished\n", (int) ret );
+			printf("\e[33m[ INFO  ]\e[0m Process `\e[1m%d\e[0m` finished\n", (int) ret);
 
 			// regista o pid do processo acabado de terminar e o respectivo return status na lista
 			if(WIFEXITED(status)){
@@ -225,9 +218,8 @@ void *tarefa_monitora(){
 				pthread_mutex_lock(&lista_mutex);
 				delete_process(lista_processos, ret);
 				pthread_mutex_unlock(&lista_mutex);
-				printf("\e[31m[ ERROR ]\e[0m Process %d terminated Abruptly\n", ret );
+				printf("\e[31m[ ERROR ]\e[0m Process %d terminated Abruptly\n", ret);
 			}
-
 
 			pthread_mutex_lock(&children_mutex);
 			numChildren--;
@@ -245,22 +237,17 @@ void *tarefa_monitora(){
 }
 
 void ctrlCHandler(int ignored){
-
-    fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m SIGNAL received.. and handled by %d \n", (int) pthread_self());
-    end_sequence();
+	fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m SIGNAL received.. and handled by %d \n", (int) pthread_self());
+	end_sequence();
 }
-/*void signalIgnorer(int ignored){
-  	fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m signalIgnorer SIGNAL received.. and ignored by %d \n", (int) getpid());
-    // To avoid children process being halted..
-}*/
+
 void read_log_file(){
 	/* Abrir FIcheiro */
 	log = fopen("log.txt","a+");
 	if(log == NULL){
-	  printf("\e[31m[ ERROR ]\e[0m could not open log.txt\n");
-	  exit(EXIT_FAILURE);
+		printf("\e[31m[ ERROR ]\e[0m could not open log.txt\n");
+		exit(EXIT_FAILURE);
 	}
-
 
 	/*Ler dados do ficheiro*/
 	char str_dummy[50], line[1024];
@@ -300,6 +287,7 @@ void mutex_init(){
 	}
 	printf("\e[33m[ INFO  ]\e[0m mutex init \e[32mComplete\e[0m\n");
 }
+
 void pthread_cond_initiation(){
 	/* Inicializacao das variaveis de condicao*/
 	if(pthread_cond_init(&slots_processos_disponiveis, NULL) != 0){
@@ -311,21 +299,21 @@ void pthread_cond_initiation(){
 		exit(EXIT_FAILURE);
 	}
 	printf("\e[33m[ INFO  ]\e[0m pthread_cond init \e[32mComplete\e[0m\n");
-
 }
+
 void pthread_creation(){
 	/*Criaçao da thread*/
-	if(pthread_create (&tid, 0,tarefa_monitora, NULL) == 0)	{
+	if(pthread_create (&tid, 0,tarefa_monitora, NULL) == 0){
 		if(__DEBUG__){
 			printf ("\e[36m[ DEBUG ]\e[0m Criada a tarefa %d\e[0m\n",(int) tid);
 		}
-	}
-	else {
+	}else{
 		printf("\e[31m[ ERROR ]\e[0m Creating Thread\n");
 		exit(EXIT_FAILURE);
 	}
 	printf("\e[33m[ INFO  ]\e[0m pthread init \e[32mComplete\e[0m\n");
 }
+
 void changing_inpute_chanel(){
 	create_fifo_read(MAIN_PIPE);
 	if(__DEBUG__){
@@ -344,10 +332,9 @@ void changing_inpute_chanel(){
 	printf("\e[33m[ INFO  ]\e[0m changing inpute chanel \e[32mComplete\e[0m\n");
 }
 
-
 int main(int argc, char *argv[]){
 	//if(__DEBUG__)
-		printf("\e[34m[ THREAD]\e[0m Main (pthread_self) %d\n", (int) pthread_self() );
+	printf("\e[34m[ THREAD]\e[0m Main (pthread_self) %d\n", (int) pthread_self() );
 
 	// Inicializacao das listas
 	// o argVector ira guardar o input do utilizador na par-shell.
@@ -357,22 +344,20 @@ int main(int argc, char *argv[]){
 
 	// Booting Process
 
-
 	// Instalacao do sinal
 	signal(SIGINT, ctrlCHandler);
 	read_log_file();
 	mutex_init();
-  pthread_cond_initiation();
+	pthread_cond_initiation();
 	pthread_creation();
 	changing_inpute_chanel();
 	printf("\e[33m[ INFO  ]\e[0m Limite de processos filhos: %d\n", MAXPAR);
 	printf("\e[33m[ INFO  ]\e[0m Booting Process \e[32mComplete\e[0m.\n");
 
-
 	// loop infinito de execucao da par-shell
 	while(!_exit_ctrl) {
 		// le os argumentos atraves da funcao fornecida
-		int args_read = readLineArguments(argVector, VECTOR_SIZE) ;
+		int args_read = readLineArguments(argVector, VECTOR_SIZE);
 		if(args_read <= 0){
 			//If it gets here no pipe is writing so we want it to get blocked
 			if(__DEBUG__){
@@ -393,8 +378,6 @@ int main(int argc, char *argv[]){
 			continue;
 		}
 
-
-
 		if(strcmp(argVector[0], EXIT_COMMAND) == 0 || strcmp(argVector[0], EXIT_GLOBAL) == 0){
 			end_sequence();
 		}else if(strcmp(argVector[0], CLOSE_TERMINAL_COMMAND) == 0){
@@ -405,8 +388,6 @@ int main(int argc, char *argv[]){
 				delete_process(lista_terminais, pstpid);
 				printf("\e[33m[ INFO  ]\e[0m par-shell-terminal eliminado (PID %d)\n", pstpid);
 			}
-		}else if(strcmp(argVector[0], "die") == 0){
-			ctrlCHandler(0);
 		}else if(strcmp(argVector[0], NEW_TERMINAL_COMMAND) == 0){
 			// uma nova par-shell-terminal vai registar-se
 			int pstpid = atoi(argVector[1]);
@@ -455,7 +436,6 @@ int main(int argc, char *argv[]){
 			if(pid < 0){
 				// erro ao criar o processo filho
 				perror("\e[31m[ Error ]\e[0m forking process");
-
 			}else if(pid > 0) {
 				// PROCESSO PAI
 
@@ -468,7 +448,6 @@ int main(int argc, char *argv[]){
 				numChildren++;
 				pthread_mutex_unlock(&children_mutex);
 
-
 				//Antigo sem_post(&comandos_escritos);
 				/* Assinalar que existe mais um filho em execuçao */
 				pthread_mutex_lock(&comandos_escritos_mutex);
@@ -477,16 +456,16 @@ int main(int argc, char *argv[]){
 				pthread_mutex_unlock(&comandos_escritos_mutex);
 			}else{
 				// PROCESSO FILHO
-				printf("\e[33m[ INFO  ]\e[0m Process `\e[1m%d\e[0m` has just started.\n", getpid() );
-				printf("\e[33m[ INFO  ]\e[0m Executing: `\e[1m%s", argVector[0] );
-				if(args_read > 1)
+				printf("\e[33m[ INFO  ]\e[0m Process `\e[1m%d\e[0m` has just started.\n", getpid());
+				printf("\e[33m[ INFO  ]\e[0m Executing: `\e[1m%s", argVector[0]);
+				if(args_read > 1){
 					printf(" %s", argVector[1] );
+				}
 				printf("\e[0m`\n");
 
-        fclose(log);
+				fclose(log);
 
-
-			 	signal(SIGINT, SIG_IGN);
+				signal(SIGINT, SIG_IGN);
 
 				// Creating name
 				char str[25];
@@ -508,10 +487,9 @@ int main(int argc, char *argv[]){
 					exit(EXIT_FAILURE);
 				}
 
-
 				// substitui a imagem do executavel actual pelo especificado no comando introduzido
-
 				if(execv(argVector[0], argVector)){
+					
 				}
 				// o processo continua se nao tiver sido possivel fazer a substituicao do executavel na directoria actual
 				if(execvp(argVector[0], argVector)){
