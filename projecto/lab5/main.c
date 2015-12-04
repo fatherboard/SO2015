@@ -192,12 +192,21 @@ void *tarefa_monitora(){
 
 void ctrlCHandler(int ignored){
     fprintf(stderr, "\n\e[1;34m[ INFO  ]\e[0m SIGNAL received by %d \n", (int) pthread_self());
-		terminate_terminals();
+		printf("1\n");
     char final_command[512];
+		printf("2\n");
     int shell_fifo = open_pipe_write(MAIN_PIPE);
+		printf("3\n");
+		printf("\n\e[33m[ INFO  ]\e[0m Terminals hunting has begun! \n");
+    terminate_terminals();
+		printf("4\n");
+    printf("\e[33m[ INFO  ]\e[0m Terminals hunting is over for now! \n");
     sprintf(final_command,	"%s\n",EXIT_GLOBAL);
+		printf("5\n");
     write(shell_fifo, final_command, strlen(final_command));
+		printf("6\n");
     close(shell_fifo);
+		printf("7\n");
     fprintf(stderr,    "\e[1;34m[ INFO  ]\e[0m SIGNAL handled by %d \n", (int) pthread_self());
 }
 
