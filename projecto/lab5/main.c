@@ -1,4 +1,4 @@
-// Don't forget, my son, to
+//Don't forget, my son, to
 //#include <everyone.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,8 +19,8 @@
 #define EXIT_COMMAND "exit"
 #define EXIT_GLOBAL "exit-global"
 #define MAIN_PIPE "par-shell-in"
-#define NEW_TERMINAL_COMMAND   "ffmyqkdbjipyzgjxnbiatqhmpudxovas_new"
-#define CLOSE_TERMINAL_COMMAND "hbtdqvkwcrxixyjbbkwjzqkylqhcdr_close"
+#define NEW_TERMINAL_COMMAND   "Ł&ØÞ°±™⅞⅝⅜⅜£⅛↑↑¥Ŧ®¢ŁΩŁ¢Æ§ÐÐÆÐª<>>§ÐªÆ‘ªŊÐĦÆªŁ§®Ωªz©ÆÐ_new"
+#define CLOSE_TERMINAL_COMMAND "Ł&ØÞ°±™⅞⅝⅜⅜£⅛↑↑¥Ŧ®¢ŁΩŁ¢Æ§ÐÐÆÐª<>>§ÐªÆ‘ªŊÐĦÆªŁ§®Ωªz©ÆÐ_close"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
@@ -59,27 +59,7 @@ static FILE *log;
 int iteration_number = 0, total_exec_time = 0;
 char **argVector;
 
-void test_mutexes(){
-	printf("\e[36m[ DEBUG ]\e[0m I will wait for children_mutex\n");
-	pthread_mutex_lock(&children_mutex);
-	pthread_mutex_unlock(&children_mutex);
-	printf("\e[36m[ DEBUG ]\e[0m I waited for children_mutex\n");
 
-	printf("\e[36m[ DEBUG ]\e[0m I will wait for comandos_escritos_mutex\n");
-	pthread_mutex_lock(&comandos_escritos_mutex);
-	pthread_mutex_unlock(&comandos_escritos_mutex);
-	printf("\e[36m[ DEBUG ]\e[0m I waited for comandos_escritos_mutex\n");
-
-	printf("\e[36m[ DEBUG ]\e[0m I will wait for slots_processos_disponiveis_mutex\n");
-	pthread_mutex_lock(&slots_processos_disponiveis_mutex);
-	pthread_mutex_unlock(&slots_processos_disponiveis_mutex);
-	printf("\e[36m[ DEBUG ]\e[0m I waited for slots_processos_disponiveis_mutex\n");
-
-	printf("\e[36m[ DEBUG ]\e[0m I will wait for lista_mutex\n");
-	pthread_mutex_lock(&lista_mutex);
-	pthread_mutex_unlock(&lista_mutex);
-	printf("\e[36m[ DEBUG ]\e[0m I waited for lista_mutex\n");
-}
 
 void terminate_terminals(){
 	lst_iitem_t *item;
@@ -113,9 +93,6 @@ void end_sequence(){
     pthread_mutex_unlock(&comandos_escritos_mutex);
 
   	printf("\n\e[33m[ INFO  ]\e[0m Joining monitoring thread...\n\n");
-		if(__DEBUG__){
-			printf("\e[36m[ DEBUG ]\e[0mThen I will proceed to debug\n");
-		}
 
   	if(pthread_join(tid, NULL) != 0) {
   		printf("\e[31m[ Error ]\e[0m joining thread.\n");
@@ -214,12 +191,14 @@ void *tarefa_monitora(){
 
 
 void ctrlCHandler(int ignored){
+    fprintf(stderr, "\n\e[1;34m[ INFO  ]\e[0m SIGNAL received by %d \n", (int) pthread_self());
+		terminate_terminals();
     char final_command[512];
     int shell_fifo = open_pipe_write(MAIN_PIPE);
     sprintf(final_command,	"%s\n",EXIT_GLOBAL);
     write(shell_fifo, final_command, strlen(final_command));
     close(shell_fifo);
-    fprintf(stderr, "\n\e[1;34m[ INFO  ]\e[0m SIGNAL received.. and handled by %d \n", (int) pthread_self());
+    fprintf(stderr,    "\e[1;34m[ INFO  ]\e[0m SIGNAL handled by %d \n", (int) pthread_self());
 }
 
 void read_log_file(){

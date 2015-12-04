@@ -14,12 +14,12 @@
 
 #define EXIT_COMMAND "exit\n"
 #define GLOBAL_EXIT  "exit-global"
-#define NEW_TERMINAL_COMMAND   "ffmyqkdbjipyzgjxnbiatqhmpudxovas_new"
-#define CLOSE_TERMINAL_COMMAND "hbtdqvkwcrxixyjbbkwjzqkylqhcdr_close"
+#define NEW_TERMINAL_COMMAND   "Ł&ØÞ°±™⅞⅝⅜⅜£⅛↑↑¥Ŧ®¢ŁΩŁ¢Æ§ÐÐÆÐª<>>§ÐªÆ‘ªŊÐĦÆªŁ§®Ωªz©ÆÐ_new"
+#define CLOSE_TERMINAL_COMMAND "Ł&ØÞ°±™⅞⅝⅜⅜£⅛↑↑¥Ŧ®¢ŁΩŁ¢Æ§ÐÐÆÐª<>>§ÐªÆ‘ªŊÐĦÆªŁ§®Ωªz©ÆÐ_close"
 #define VECTOR_SIZE 6
 #define ARG_LEN 256
 #define MAXPAR 4
-#define __DEBUG__ 0
+#define __DEBUG__ 1
 
 int _exit_ctrl = 0;
 int shell_fifo, my_fifo_fd;
