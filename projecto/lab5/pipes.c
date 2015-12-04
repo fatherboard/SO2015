@@ -20,7 +20,7 @@ void deleteFifo(char * name){
 	}
   }
   else{
-    printf("\e[33m[ INFO  ]\e[0m pipe named \'%s\' removed with \e[32msucess\e[0m\n", name);
+    printf("\e[33m[ INFO  ]\e[0m pipe named \'%s\' removed with \e[32msuccess\e[0m\n", name);
   }
 }
 

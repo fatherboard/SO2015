@@ -1,3 +1,5 @@
+// Don't forget, my son, to
+//#include <everyone.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -126,6 +128,7 @@ void end_sequence(){
 		printf("not ");
 	}
 	printf("be executed\n");
+	fflush(stdout);
 	if(__DEBUG__){
 		printf("\e[36m[ DEBUG ]\e[0m I will test the locks\n");
 		test_mutexes();
@@ -157,10 +160,10 @@ void end_sequence(){
 	slotsAvaiable++;
 	pthread_cond_signal(&slots_processos_disponiveis);
 	pthread_mutex_unlock(&slots_processos_disponiveis_mutex);*/
-	printf("\e[33m[ INFO  ]\e[0m Par-shell before destroy \e[36mhere\e[0m\n");
-	pthread_cond_destroy(&slots_processos_disponiveis);
+	//printf("\e[33m[ INFO  ]\e[0m Par-shell before destroy \e[36mhere\e[0m\n");
+	//pthread_cond_destroy(&slots_processos_disponiveis);
 
-	printf("\e[33m[ INFO  ]\e[0m cond destroyed\n");
+	//printf("\e[33m[ INFO  ]\e[0m cond destroyed\n");
 	// da a mensagem de fim do programa
 	printf("\e[33m[ INFO  ]\e[0m Par-shell terminated\n");
 	printf("\e[33m[ INFO  ]\e[0m exiting...\n");
@@ -237,7 +240,7 @@ void *tarefa_monitora(){
 }
 
 void ctrlCHandler(int ignored){
-	fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m SIGNAL received.. and handled by %d \n", (int) pthread_self());
+	fprintf(stderr, "\e[1;34m[ INFO  ]\e[0m SIGNAL received... and handled by %d \n", (int) pthread_self());
 	end_sequence();
 }
 
